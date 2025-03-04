@@ -1,8 +1,12 @@
-import { PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { IsBoolean, IsDate, IsOptional, IsString } from '@nestjs/class-validator';
+import {
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
+import { IsBoolean, IsDate, IsOptional, IsString } from "class-validator";
 
 export abstract class BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
   @CreateDateColumn()
@@ -20,10 +24,8 @@ export abstract class BaseEntity {
   @IsBoolean()
   isActive: boolean = false; // Por defecto, el objeto no está activo
 
-
   // Métodos abstractos para extender las clases hijas
-  abstract create(data: any): Promise<BaseEntity> ;
+  abstract create(data: any): Promise<BaseEntity>;
   abstract update(data: any): Promise<BaseEntity>;
-  abstract delete(id:string): Promise<BaseEntity>;
-
+  abstract delete(id: string): Promise<BaseEntity>;
 }

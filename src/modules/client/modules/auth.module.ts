@@ -16,4 +16,4 @@ import { ClientLoggingInterceptor } from "../interceptors/logging.interceptor";
     ClientLoggingInterceptor,
   ],
 })
-export class ClientModule {}
+export class AuthClientModule {}

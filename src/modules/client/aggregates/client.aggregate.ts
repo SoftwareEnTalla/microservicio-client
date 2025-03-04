@@ -1,8 +1,8 @@
-import { AggregateRoot } from '@nestjs/cqrs';
-import { BaseEntity } from '../entities/base.entity';
+import { AggregateRoot } from "@nestjs/cqrs";
+import { BaseEntity } from "../entities/base.entity";
 
 export class ClientAggregate extends AggregateRoot {
-  private state: BaseEntity;
+  private state!: BaseEntity;
 
   constructor() {
     super();

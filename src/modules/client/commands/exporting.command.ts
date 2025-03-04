@@ -1,4 +1,4 @@
 export * from "./base.command";
-export * from "./createdeleteclient.command";
-export * from "./updatedeleteclient.command";
-export * from "./deletedeleteclient.command";
+export * from "./createclient.command";
+export * from "./updateclient.command";
+export * from "./deleteclient.command";
