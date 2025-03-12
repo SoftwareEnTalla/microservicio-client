@@ -1,7 +1,7 @@
 import { Entity } from "typeorm";
 import { BaseEntity } from "./base.entity";
 import { IsNotEmpty, IsString, validate } from "class-validator";
-import { plainToClass } from "class-transformer";
+import { plainToClass, plainToInstance } from "class-transformer";
 import { CreateClientDto } from "../dtos/createclient.dto";
 
 @Entity("Client")
@@ -30,29 +30,42 @@ export class Client extends BaseEntity {
 
   //Implementación de Métodos abstractos de la clase padre
   async create(data: any): Promise<Client> {
+    // Verifica si `data` es un array y toma el primer objeto si es necesario
+    const singleData = Array.isArray(data) ? data[0] : data; // Si es un array, tomamos el primer objeto
     // Convertir el objeto data a una instancia del DTO
-    const clientDto = plainToClass(CreateClientDto, data);
+    const clientDto = plainToInstance(
+      CreateClientDto,
+      singleData as CreateClientDto
+    );
 
     // Validar el DTO
     const errors = await validate(clientDto);
     if (errors.length > 0) {
       throw new Error("Validation failed creating client!"); // Manejo de errores de validación
     }
-    return { ...this, ...data };
+    // Asignar la fecha de modificación
+    clientDto.modificationDate = new Date();
+    return { ...this, ...clientDto };
   }
   async update(data: any): Promise<Client> {
+    // Verifica si `data` es un array y toma el primer objeto si es necesario
+    const singleData = Array.isArray(data) ? data[0] : data; // Si es un array, tomamos el primer objeto
+
     // Convertir el objeto data a una instancia del DTO
-    const clientDto = plainToClass(CreateClientDto, data);
+    const clientDto = plainToInstance(
+      CreateClientDto,
+      singleData as CreateClientDto
+    );
 
     // Validar el DTO
     const errors = await validate(clientDto);
     if (errors.length > 0) {
       throw new Error("Validation failed creating client!"); // Manejo de errores de validación
     }
-    clientDto.forEach((client) => {
-      client.modificationDate = new Date(); // Fecha de modificación al momento de actualizar la instancia
-    });
-    return { ...this, ...data };
+    // Asignar la fecha de modificación
+    clientDto.modificationDate = new Date();
+
+    return { ...this, ...clientDto };
   }
   async delete(): Promise<Client> {
     return { ...this };

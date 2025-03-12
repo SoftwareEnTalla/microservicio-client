@@ -44,7 +44,7 @@ export class ClientResolver {
   }
 
   @Query(() => ClientDto)
-  client(@Args("id") id: string): Promise<Client> {
+  client(@Args("id") id: string): Promise<Client | null> {
     return this.service.findById(id);
   }
 }

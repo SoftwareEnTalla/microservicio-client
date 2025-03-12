@@ -1,19 +1,18 @@
 import { Module } from "@nestjs/common";
 import { ClientCommandController } from "../controllers/clientcommand.controller";
-import { ClientCommandService } from "../services/clientcommand.service";
-import { ClientCommandRepository } from "../repositories/clientcommand.repository";
-import { ClientResolver } from "../graphql/client.resolver";
 import { ClientAuthGuard } from "../guards/auth.guard";
 import { ClientLoggingInterceptor } from "../interceptors/logging.interceptor";
+import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 
 @Module({
   controllers: [ClientCommandController],
   providers: [
-    ClientCommandService,
-    ClientCommandRepository,
-    ClientResolver,
     ClientAuthGuard,
     ClientLoggingInterceptor,
+    CommandBus,
+    EventBus,
+    UnhandledExceptionBus,
   ],
+  exports: [ClientAuthGuard, CommandBus, EventBus, UnhandledExceptionBus],
 })
 export class AuthClientModule {}

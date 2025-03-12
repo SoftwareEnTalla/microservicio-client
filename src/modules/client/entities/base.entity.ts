@@ -2,9 +2,13 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Entity,
+  TableInheritance,
 } from "typeorm";
 import { IsBoolean, IsDate, IsOptional, IsString } from "class-validator";
 
+@Entity() // 🔹 Necesario para que TypeORM la registre como entidad
+@TableInheritance({ column: { type: "varchar", name: "type" } }) // 🔹 Permite herencia en entidades hijas
 export abstract class BaseEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
