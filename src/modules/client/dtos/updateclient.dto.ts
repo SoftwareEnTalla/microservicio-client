@@ -11,9 +11,8 @@ export class UpdateClientDto {
   // Propiedades específicas de la clase UpdateClientDto en cuestión
 
   @ApiProperty({
-    description: "Lista de identificadores de instancias a eliminar",
-    example:
-      "Se proporciona una lista de identificadores de clientes a eliminar",
+    description: "Identificador de instancia a actualizar",
+    example: "Se proporciona un identificador de Client a actualizar",
   })
   @IsString()
   @IsOptional()

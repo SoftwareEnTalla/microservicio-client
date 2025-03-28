@@ -1,11 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-  IsNotEmpty,
-  IsString,
-  IsBoolean,
-  IsDate,
-  IsOptional,
-} from "class-validator";
+import { IsString, IsOptional } from "class-validator";
 
 export class DeleteClientDto {
   // Propiedades específicas de la clase DeleteClientDto en cuestión
