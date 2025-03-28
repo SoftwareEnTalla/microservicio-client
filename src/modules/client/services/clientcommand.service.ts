@@ -1,89 +1,75 @@
 import { Injectable } from "@nestjs/common";
 import { ClientCommandRepository } from "../repositories/clientcommand.repository";
 import { Client } from "../entities/client.entity";
-import { FindManyOptions } from "typeorm";
+import { DeleteResult } from "typeorm";
+import { UpdateClientDto } from "../dtos/updateclient.dto";
 
 @Injectable()
 export class ClientCommandService {
   constructor(private readonly repository: ClientCommandRepository) {}
-  // Implementar lógica de negocio aquí
-  async save(entity: Client): Promise<Client> {
-    return this.repository.save(entity);
+
+  /**
+   * Crea un nuevo cliente.
+   * @param entity Cliente a crear.
+   * @returns El cliente creado.
+   */
+  async create(entity: Client): Promise<Client> {
+    return this.repository.create(entity);
   }
 
-  /* async findAll(options?: FindManyOptions<Client>): Promise<Client[]> {
-    return this.repository.findAll(options);
+  /**
+   * Crea múltiples clientes en una sola operación.
+   * @param entity Lista de clientes a crear.
+   * @returns Lista de clientes creados.
+   */
+  async bulkCreate(entity: Client[]): Promise<Client[]> {
+    return this.repository.bulkCreate(entity);
   }
-  async findById(id: string): Promise<Client | null> {
-    return this.repository.findById(id);
+
+  /**
+   * Elimina un cliente por su ID.
+   * @param id ID del cliente a eliminar.
+   * @returns Resultado de la operación de eliminación.
+   */
+  async delete(id: string): Promise<DeleteResult> {
+    return await this.repository.delete(id);
   }
-  async findByField(field: string, value: any): Promise<Client[] | null> {
-    return this.repository.findByField(field, value);
+
+  /**
+   * Elimina múltiples clientes por sus IDs.
+   * @param ids Lista de IDs de clientes a eliminar.
+   * @returns Resultado de la operación de eliminación.
+   */
+  async bulkDelete(ids: string[]): Promise<DeleteResult> {
+    return await this.repository.bulkDelete(ids);
   }
-  async findMany(ids: string[]): Promise<Client[] | null> {
-    return this.repository.findMany(ids);
-  }
-  async deleteById(id: string): Promise<void> {
-    await this.repository.deleteById(id);
-  }
-  async updateById(
+
+  /**
+   * Actualiza un cliente existente por su ID.
+   * @param id ID del cliente a actualizar.
+   * @param partialEntity Objeto que contiene los campos a actualizar.
+   * @returns El cliente actualizado o null si no se encuentra.
+   */
+  async update(
     id: string,
     partialEntity: Partial<Client>
   ): Promise<Client | null> {
-    await this.repository.updateById(id, partialEntity);
-    return this.repository.findById(id);
+    return await this.repository.update(id, partialEntity);
   }
-  async count(): Promise<number> {
-    return this.repository.count();
+
+  /**
+   * Actualiza un cliente existente por su ID.
+   * @param id ID del cliente a actualizar.
+   * @param partialEntity Objeto que contiene los campos a actualizar.
+   * @returns El cliente actualizado o null si no se encuentra.
+   */
+  async bulkUpdate(
+    partialEntity: (Partial<UpdateClientDto> | undefined)[]
+  ): Promise<Client[] | null> {
+    // Asegúrate de que partialEntity no contenga undefined
+    const validEntities = partialEntity.filter(
+      (entity) => entity !== undefined
+    );
+    return await this.repository.bulkUpdate(validEntities);
   }
-  async findAndCount(where?: Record<string, any>): Promise<[Client[], number]> {
-    const [entities, count] = await this.repository.findAndCount({
-      where: where,
-    });
-    return [entities, count];
-  }
-  async findOne(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client | null> {
-    return this.repository.findOne({
-      where: where,
-      relations: relations,
-    });
-  }
-  async findManyAndCount(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<[Client[], number]> {
-    return this.repository.findAndCount({
-      where: where,
-      relations: relations,
-    });
-  }
-  async findOneOrFail(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client> {
-    const entity = await this.repository.findOne({
-      where: where,
-      relations: relations,
-    });
-    if (!entity) {
-      throw new Error("Entity not found");
-    }
-    return entity;
-  }
-  async findManyOrFail(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client[]> {
-    const entities = await this.repository.findAll({
-      where: where,
-      relations: relations,
-    });
-    if (!entities || entities.length === 0) {
-      throw new Error("Entities not found");
-    }
-    return entities;
-  }*/
 }

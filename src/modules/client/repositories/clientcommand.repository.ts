@@ -1,18 +1,31 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { FindManyOptions, Repository } from "typeorm";
+import {
+  DeleteResult,
+  FindManyOptions,
+  FindOptionsWhere,
+  Repository,
+  UpdateResult,
+} from "typeorm";
 import { BaseEntity } from "../entities/base.entity";
 import { Client } from "../entities/client.entity";
+import { ClientQueryRepository } from "./clientquery.repository";
+import { UpdateClientDto } from "../dtos/updateclient.dto";
 
 @Injectable()
 export class ClientCommandRepository {
   constructor(
     @InjectRepository(Client)
-    private readonly repository: Repository<Client>
+    private readonly repository: Repository<Client>,
+    private readonly clientRepository: ClientQueryRepository
   ) {
     this.validate();
   }
 
+  /**
+   * Valida que la entidad Client extienda de BaseEntity.
+   * @throws Error si Client no extiende de BaseEntity.
+   */
   private validate(): void {
     // Crear una instancia ficticia para validar la herencia
     const entityInstance = Object.create(Client.prototype);
@@ -23,84 +36,72 @@ export class ClientCommandRepository {
       );
     }
   }
-  async save(entity: Client): Promise<Client> {
+
+  /**
+   * Crea un nuevo cliente.
+   * @param entity Cliente a crear.
+   * @returns El cliente creado.
+   */
+  async create(entity: Client): Promise<Client> {
     return this.repository.save(entity);
   }
 
-  /*async findAll(options?: FindManyOptions<Client>): Promise<Client[]> {
-    return this.repository.find(options);
+  /**
+   * Crea múltiples clientes en una sola operación.
+   * @param entities Lista de clientes a crear.
+   * @returns Lista de clientes creados.
+   */
+  async bulkCreate(entities: Client[]): Promise<Client[]> {
+    return this.repository.save(entities);
   }
 
-  async findById(id: string): Promise<Client | null> {
-    return this.repository.findOneBy({ id });
-  }
-  async findByField(field: string, value: any): Promise<Client[] | null> {
-    return this.repository.find({ [field]: value });
-  }
-  async findMany(ids: string[]): Promise<Client[] | null> {
-    return this.repository.findByIds(ids);
-  }
-  async deleteById(id: string): Promise<void> {
-    await this.repository.delete({ id });
-  }
-  async updateById(
+  /**
+   * Actualiza un cliente existente por su ID.
+   * @param id ID del cliente a actualizar.
+   * @param partialEntity Objeto que contiene los campos a actualizar.
+   * @returns El cliente actualizado o null si no se encuentra.
+   */
+  async update(
     id: string,
     partialEntity: Partial<Client>
   ): Promise<Client | null> {
-    await this.repository.update({ id }, partialEntity);
-    return this.repository.findOneBy({ id });
+    let result: UpdateResult = await this.repository.update(id, partialEntity);
+    return this.clientRepository.findById(id);
   }
-  async count(): Promise<number> {
-    return this.repository.count();
-  }
-  async findAndCount(where?: Record<string, any>): Promise<[Client[], number]> {
-    const [entities, count] = await this.repository.findAndCount({
-      where: where,
-    });
-    return [entities, count];
-  }
-  async findOne(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client | null> {
-    return this.repository.findOne({
-      where: where,
-      relations: relations,
-    });
-  }
-  async findManyAndCount(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<[Client[], number]> {
-    return this.repository.findAndCount({
-      where: where,
-      relations: relations,
-    });
-  }
-  async findOneOrFail(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client> {
-    const entity = await this.repository.findOne({
-      where: where,
-      relations: relations,
-    });
-    if (!entity) {
-      throw new Error("Entity not found");
+
+  /**
+   * Actualiza múltiples clientes en una sola operación.
+   * @param entities Lista de clientes con sus campos a actualizar.
+   * @returns Lista de clientes actualizados.
+   */
+  async bulkUpdate(entities: Partial<UpdateClientDto>[]): Promise<Client[]> {
+    const updatedClients: Client[] = [];
+    for (const entity of entities) {
+      if (entity.id) {
+        const updatedClient = await this.update(entity.id, entity);
+        if (updatedClient) {
+          updatedClients.push(updatedClient);
+        }
+      }
     }
-    return entity;
+    return updatedClients;
   }
-  async findManyOrFail(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client[]> {
-    const entities = await this.repository.find({
-      where: where,
-      relations: relations,
-    });
-    if (!entities || entities.length === 0) {
-      throw new Error("Entities not found");
-    }
-    return entities;
-  }*/
+
+  /**
+   * Elimina un cliente por su ID.
+   * @param id ID del cliente a eliminar.
+   * @returns Resultado de la operación de eliminación.
+   */
+  async delete(id: string): Promise<DeleteResult> {
+    return await this.repository.delete({ id });
+  }
+
+  /**
+   * Elimina múltiples clientes por sus IDs.
+   * @param ids Lista de IDs de clientes a eliminar.
+   * @returns Resultado de la operación de eliminación.
+   */
+  async bulkDelete(ids: string[]): Promise<DeleteResult> {
+    return await this.repository.delete(ids);
+  }
 }

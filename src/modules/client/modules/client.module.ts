@@ -27,6 +27,10 @@ import { ModuleRef } from "@nestjs/core";
     ClientAuthGuard,
     ClientLoggingInterceptor,
   ],
-  exports: [ClientCommandRepository], // Asegúrate de exportarlo si es necesario
+  exports: [
+    ClientCommandRepository,
+    ClientCommandService, // Exportar el servicio si se usa en otros módulos
+    TypeOrmModule, // Exportar TypeOrmModule si se necesitan los repositorios
+  ], // Asegúrate de exportarlo si es necesario
 })
 export class ClientModule {}

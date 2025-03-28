@@ -3,10 +3,15 @@ import { BaseEntity } from "./base.entity";
 import { IsNotEmpty, IsString, validate } from "class-validator";
 import { plainToClass, plainToInstance } from "class-transformer";
 import { CreateClientDto } from "../dtos/createclient.dto";
+import { ApiProperty } from "@nestjs/swagger";
 
 @Entity("Client")
 export class Client extends BaseEntity {
   // Propiedades de client
+  @ApiProperty({
+    description: "El nombre del cliente",
+    example: true,
+  })
   @IsString()
   @IsNotEmpty()
   private name: string = "";

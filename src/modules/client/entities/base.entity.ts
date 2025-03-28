@@ -4,6 +4,7 @@ import {
   UpdateDateColumn,
   Entity,
   TableInheritance,
+  Column,
 } from "typeorm";
 import { IsBoolean, IsDate, IsOptional, IsString } from "class-validator";
 
@@ -15,10 +16,12 @@ export abstract class BaseEntity {
 
   @CreateDateColumn()
   @IsDate()
+  @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   creationDate: Date = new Date(); // Fecha de creación por defecto
 
   @UpdateDateColumn()
   @IsDate()
+  @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   modificationDate: Date = new Date(); // Fecha de modificación por defecto
 
   @IsString()
