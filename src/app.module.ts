@@ -13,6 +13,9 @@ import { TranslocoService } from "@jsverse/transloco";
 import { HeaderResolver, AcceptLanguageResolver } from "nestjs-i18n";
 import { TranslocoWrapperService } from "./core/services/transloco-wrapper.service";
 import { TranslocoModule } from "@ngneat/transloco";
+import { ClientQueryController } from "./modules/client/controllers/clientquery.controller";
+import { ClientCommandService } from "./modules/client/services/clientcommand.service";
+import { ClientQueryService } from "./modules/client/services/clientquery.service";
 
 @Module({
   imports: [
@@ -28,29 +31,6 @@ import { TranslocoModule } from "@ngneat/transloco";
       cache: true, // Mejora rendimiento cacheando las variables
       expandVariables: true, // Permite usar variables anidadas (ej: ${DB_HOST})
     }),
-
-    /**
-     * I18nModule - Internacionalización y localización
-     *
-     * Configuración completa para manejo de múltiples idiomas.
-     * Incluye carga de traducciones desde archivos JSON y detección automática de idioma.
-     */
-    /*  I18nModule.forRootAsync({
-      loader: CustomI18nLoader,
-      useFactory: (translocoWrapper: TranslocoWrapperService) => ({
-        fallbackLanguage: translocoWrapper
-          .getTranslocoService()
-          .getDefaultLang(),
-        loaderOptions: {
-          path: join(process.cwd(), "i18n"),
-          watch: process.env.NODE_ENV === "development",
-        },
-        typesOutputPath: join(process.cwd(), "src/generated/i18n-types.ts"),
-        throwOnMissingKey: true,
-      }),
-      inject: [TranslocoWrapperService],
-    }),*/
-
     /**
      * TypeOrmModule - Configuración de la base de datos
      *
@@ -71,19 +51,17 @@ import { TranslocoModule } from "@ngneat/transloco";
         };
       },
     }),
-
     /**
      * Módulos de la aplicación
      */
     ClientModule, // Módulo principal de funcionalidad de clientes
   ],
-
   /**
    * Controladores
    *
    * Registro de controladores a nivel de aplicación.
    */
-  controllers: [ClientCommandController],
+  controllers: [ClientCommandController, ClientQueryController],
 
   /**
    * Proveedores (Servicios, Repositorios, etc.)
@@ -95,12 +73,7 @@ import { TranslocoModule } from "@ngneat/transloco";
     UnhandledExceptionBus, // Manejador global de excepciones
     CommandBus, // Bus de comandos
     EventBus, // Bus de eventos
-
-    // Internacionalización
-    // CustomI18nLoader, // Cargador personalizado de traducciones
-    //  TranslocoService, // Servicio de Transloco para manejo de idiomas
-    // TranslocoWrapperService,
-    // Base de datos
+    // Configuración de Base de datos
     {
       provide: DataSource, // Token para inyección
       useValue: AppDataSource, // Instancia singleton del DataSource
@@ -112,22 +85,9 @@ import { TranslocoModule } from "@ngneat/transloco";
    *
    * Hace disponibles módulos y servicios para otros módulos que importen este módulo.
    */
-  exports: [
-    // Exporta el módulo de internacionalización
-    // I18nModule,
-    // TranslocoWrapperService,
-  ],
+  exports: [ClientCommandService, ClientQueryService],
 })
 export class ClientAppModule {
-  /* static forRoot(): DynamicModule {
-    return {
-      module: TranslocoModule,
-      providers: [TranslocoWrapperService],
-      exports: [TranslocoWrapperService],
-      global: true,
-    };
-  }*/
-
   /**
    * Constructor del módulo principal
    * @param dataSource Instancia inyectada del DataSource
@@ -165,13 +125,5 @@ export class ClientAppModule {
    *
    * Suscribe a eventos de cambio de idioma para mantener consistencia.
    */
-  private setupLanguageChangeHandling() {
-    /* this.translocoService.langChanges$.subscribe({
-      next: (lang) => {
-        console.log(`🌐 Idioma cambiado a: ${lang}`);
-        // Aquí puedes añadir lógica adicional al cambiar idioma
-      },
-      error: (err) => console.error("Error en observador de idioma:", err),
-    });*/
-  }
+  private setupLanguageChangeHandling() {}
 }

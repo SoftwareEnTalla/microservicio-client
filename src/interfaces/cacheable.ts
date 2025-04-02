@@ -1,3 +1,4 @@
+import { Cache } from "cache-manager";
 export type CacheKeyBuilder = (...args: any[]) => string;
 
 export interface CacheOptions {
