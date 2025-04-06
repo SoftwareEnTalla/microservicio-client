@@ -1,19 +1,28 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import {
   DeleteResult,
-  FindManyOptions,
-  FindOptionsWhere,
   Repository,
   UpdateResult,
-} from "typeorm";
-import { BaseEntity } from "../entities/base.entity";
-import { Client } from "../entities/client.entity";
-import { ClientQueryRepository } from "./clientquery.repository";
-import { UpdateClientDto } from "../dtos/updateclient.dto";
+} from 'typeorm';
+
+
+import { BaseEntity } from '../entities/base.entity';
+import { Client } from '../entities/client.entity';
+import { ClientQueryRepository } from './clientquery.repository';
+import { generateCacheKey } from 'src/utils/functions';
+import { Cacheable } from '../decorators/cache.decorator';
+import {ClientRepository} from './client.repository';
+
+//Logger
+import { LogExecutionTime } from 'src/common/logger/loggers.functions';
+import { LoggerClient } from 'src/common/logger/logger.client';
+
 
 @Injectable()
 export class ClientCommandRepository {
+
+  //Constructor del repositorio de datos: ClientCommandRepository
   constructor(
     @InjectRepository(Client)
     private readonly repository: Repository<Client>,
@@ -22,12 +31,17 @@ export class ClientCommandRepository {
     this.validate();
   }
 
-  /**
-   * Valida que la entidad Client extienda de BaseEntity.
-   * @throws Error si Client no extiende de BaseEntity.
-   */
+  @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+  })
   private validate(): void {
-    // Crear una instancia ficticia para validar la herencia
     const entityInstance = Object.create(Client.prototype);
 
     if (!(entityInstance instanceof BaseEntity)) {
@@ -36,31 +50,50 @@ export class ClientCommandRepository {
       );
     }
   }
-
-  /**
-   * Crea un nuevo cliente.
-   * @param entity Cliente a crear.
-   * @returns El cliente creado.
-   */
+  
+  @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+  })
+  @Cacheable({ key: (args) => generateCacheKey<Client>('createClient',args[0], args[1]), ttl: 60 })
   async create(entity: Client): Promise<Client> {
     return this.repository.save(entity);
   }
 
-  /**
-   * Crea múltiples clientes en una sola operación.
-   * @param entities Lista de clientes a crear.
-   * @returns Lista de clientes creados.
-   */
+
+  @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+  })
+  @Cacheable({ key: (args) => generateCacheKey<Client[]>('createClients',args[0], args[1]), ttl: 60 })
   async bulkCreate(entities: Client[]): Promise<Client[]> {
     return this.repository.save(entities);
   }
 
-  /**
-   * Actualiza un cliente existente por su ID.
-   * @param id ID del cliente a actualizar.
-   * @param partialEntity Objeto que contiene los campos a actualizar.
-   * @returns El cliente actualizado o null si no se encuentra.
-   */
+  
+  @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+  })
+  @Cacheable({ key: (args) => generateCacheKey<Client>('updateClient',args[0], args[1]), ttl: 60 })
   async update(
     id: string,
     partialEntity: Partial<Client>
@@ -69,38 +102,59 @@ export class ClientCommandRepository {
     return this.clientRepository.findById(id);
   }
 
-  /**
-   * Actualiza múltiples clientes en una sola operación.
-   * @param entities Lista de clientes con sus campos a actualizar.
-   * @returns Lista de clientes actualizados.
-   */
-  async bulkUpdate(entities: Partial<UpdateClientDto>[]): Promise<Client[]> {
-    const updatedClients: Client[] = [];
+
+  @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+  })
+  @Cacheable({ key: (args) => generateCacheKey<Client[]>('updateClients',args[0], args[1]), ttl: 60 })
+  async bulkUpdate(entities: Partial<Client>[]): Promise<Client[]> {
+    const updatedEntities: Client[] = [];
     for (const entity of entities) {
       if (entity.id) {
-        const updatedClient = await this.update(entity.id, entity);
-        if (updatedClient) {
-          updatedClients.push(updatedClient);
+        const updatedEntity = await this.update(entity.id, entity);
+        if (updatedEntity) {
+          updatedEntities.push(updatedEntity);
         }
       }
     }
-    return updatedClients;
+    return updatedEntities;
   }
 
-  /**
-   * Elimina un cliente por su ID.
-   * @param id ID del cliente a eliminar.
-   * @returns Resultado de la operación de eliminación.
-   */
+
+  @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+  })
+  @Cacheable({ key: (args) => generateCacheKey<string>('deleteClient',args[0]), ttl: 60 })
   async delete(id: string): Promise<DeleteResult> {
     return await this.repository.delete({ id });
   }
 
-  /**
-   * Elimina múltiples clientes por sus IDs.
-   * @param ids Lista de IDs de clientes a eliminar.
-   * @returns Resultado de la operación de eliminación.
-   */
+
+  @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+  })
+  @Cacheable({ key: (args) => generateCacheKey<string[]>('deleteClients',args[0]), ttl: 60 })
   async bulkDelete(ids: string[]): Promise<DeleteResult> {
     return await this.repository.delete(ids);
   }

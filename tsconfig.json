@@ -1,24 +1,41 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "strict": true,
-        "esModuleInterop": true,
-        "declaration": true,
-        "removeComments": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
-        "target": "ES2021",
-        "sourceMap": true,
-        "outDir": "./dist",
-        "baseUrl": "./",
-        "incremental": true,
-        "skipLibCheck": true,
-        "strictNullChecks": true,
-        "forceConsistentCasingInFileNames": true,
-        "noImplicitAny": false,
-        "strictBindCallApply": false,
-        "noFallthroughCasesInSwitch": false
-    }
-}
+      "module": "commonjs",
+      "target": "ES2021",
+      "moduleResolution": "node",
+      "outDir": "./dist",
+      "baseUrl": "./",
+      "paths": {
+        "@common/*": ["src/common/*"],
+        "@core/*": ["src/core/*"],
+        "@modules/*": ["src/modules/*"],
+        "@utils/*": ["src/utils/*"],
+        "@config/*": ["src/config/*"],
+        "@interfaces/*": ["src/interfaces/*"],
+        "@logger": ["src/common/logger/index"],
+        "@helpers": ["src/common/helpers/index"]
+      },
+      "strict": true,
+      "esModuleInterop": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "strictNullChecks": true,
+      "noImplicitAny": false,
+      "strictBindCallApply": false,
+      "noFallthroughCasesInSwitch": true,
+      "sourceMap": true,
+      "incremental": true,
+      "resolveJsonModule": true,
+      "allowJs": false,
+      "isolatedModules": false
+    },
+    "exclude": [
+      "node_modules",
+      "dist",
+      "test",
+      "**/*.spec.ts",
+      "**/*.test.ts"
+    ]
+  }

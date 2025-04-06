@@ -1,0 +1,11 @@
+Desde https://github.com/SoftwareEnTalla/microservicio-client
+ * branch            main       -> FETCH_HEAD
+Ya está actualizado.
+fatal: /media/datos/Trabajo/ProjectosAngular/backend/payment-service: '/media/datos/Trabajo/ProjectosAngular/backend/payment-service' está fuera del repositorio en '/media/datos/Trabajo/ProjectosAngular/backend/client-service'
+fatal: /media/datos/Trabajo/ProjectosAngular/backend/payment-service: '/media/datos/Trabajo/ProjectosAngular/backend/payment-service' está fuera del repositorio en '/media/datos/Trabajo/ProjectosAngular/backend/client-service'
+fatal: no existe la sección: submodule.payment-service
+error: no se puede pull con rebase: Tienes cambios sin marcar.
+error: Por favor, confírmalos o guárdalos.
+fatal: /media/datos/Trabajo/ProjectosAngular/backend/payment-service: '/media/datos/Trabajo/ProjectosAngular/backend/payment-service' está fuera del repositorio en '/media/datos/Trabajo/ProjectosAngular/backend/client-service'
+fatal: /media/datos/Trabajo/ProjectosAngular/backend/payment-service: '/media/datos/Trabajo/ProjectosAngular/backend/payment-service' está fuera del repositorio en '/media/datos/Trabajo/ProjectosAngular/backend/client-service'
+fatal: no existe la sección: submodule.payment-service

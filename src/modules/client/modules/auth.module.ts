@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ClientCommandController } from "../controllers/clientcommand.controller";
-import { ClientAuthGuard } from "../guards/auth.guard";
-import { ClientLoggingInterceptor } from "../interceptors/logging.interceptor";
+import { ClientLoggingInterceptor } from "../interceptors/client.logging.interceptor";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
+import { ClientAuthGuard } from "../guards/clientauthguard.guard";
 
 @Module({
   controllers: [ClientCommandController],

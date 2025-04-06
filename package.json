@@ -1,7 +1,7 @@
 {
   "name": "api.entalla.backend",
   "version": "0.0.1",
-  "description": "Este proyecto es una API desarrollada con NestJS para la Empresa de Soluciones Informáticas SoftwarEnTalla.",
+  "description": "Este proyecto es una API desarrollada con NestJS para la Empresa de Soluciones Informáticas SoftwarEnTalla. Micro servicio de ${name}",
   "author": "softwarentalla@gmail.com",
   "private": true,
   "license": "Proprietary",
@@ -15,7 +15,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
+    "test": "NODE_PATH=./dist jest -r tsconfig-paths/register",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
@@ -25,6 +25,7 @@
     "@eventstore/db-client": "^6.2.1",
     "@jsverse/transloco": "^7.6.1",
     "@jsverse/transloco-utils": "^7.0.2",
+    "@nestjs/apollo": "^13.0.4",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.11",
     "@nestjs/config": "^4.0.1",
@@ -35,10 +36,12 @@
     "@nestjs/swagger": "^11.1.0",
     "@nestjs/typeorm": "^11.0.0",
     "@ngneat/transloco": "^6.0.4",
+    "apollo-server-express": "^3.13.0",
     "cache-manager": "^6.4.1",
     "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.4.7",
     "esm": "^3.2.25",
     "graphql": "^16.10.0",
@@ -47,6 +50,7 @@
     "kafkajs": "^2.2.4",
     "nestjs-i18n": "^10.5.1",
     "object-hash": "^3.0.0",
+    "passport-headerapikey": "^1.2.2",
     "pg": "^8.13.1",
     "rxjs": "^7.8.2",
     "uuid": "^11.1.0",
@@ -67,6 +71,7 @@
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typeorm": "^0.3.21",
     "typescript": "^5.8.2"
   },
@@ -88,3 +93,6 @@
     "testEnvironment": "node"
   }
 }
+
+
+

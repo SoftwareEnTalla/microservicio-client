@@ -1,29 +1,31 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsOptional } from "class-validator";
+import { IsNotEmpty, IsString, IsBoolean, IsDate, IsOptional,IsObject, ValidateNested } from "class-validator";
+import { InputType, Field } from '@nestjs/graphql'; 
+import { Type } from 'class-transformer';
 
+@InputType()
 export class DeleteClientDto {
-  // Propiedades específicas de la clase DeleteClientDto en cuestión
-
+ // Propiedades específicas de la clase DeleteClientDto en cuestión
+  
+ 
   @ApiProperty({
-    description: "El identificador del cliente",
-    example:
-      "Un UUID es una cadena de 36 caracteres que incluye letras y números, y se representa en el formato xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
+    description: "Identificador de instancia a eliminar",
+    example: "Se proporciona un identificador de DeleteClient a eliminar",
   })
   @IsString()
-  @IsOptional()
-  id?: string;
+  @IsNotEmpty()
+  @Field(() => String,{ nullable: false })
+  id: string='';
+  
 
   @ApiProperty({
     description: "Lista de identificadores de instancias a eliminar",
-    example:
-      "Se proporciona una lista de identificadores de clientes a eliminar",
+    example:"Se proporciona una lista de identificadores de DeleteClient a eliminar",
   })
   @IsString()
   @IsOptional()
-  ids?: string[];
+  @Field(() => String,{ nullable: true })
+  ids?: string[];  
+  
 
-  // Constructor privado para evitar instanciación directa
-  private constructor(partial: Partial<DeleteClientDto>) {
-    Object.assign(this, partial);
-  }
 }

@@ -30,6 +30,67 @@ export const AppDataSource = new DataSource({
   },
 } as CustomPostgresOptions);
 
+
+// Añade esta función después de initializeDatabase()
+export async function createDatabaseIfNotExists(
+  dbName: string,
+  owner: string = "postgres"
+) {
+  const adminPoolConfig: PoolConfig = {
+    user: process.env.DB_USER || "postgres",
+    host: process.env.DB_HOST || "localhost",
+    password: process.env.DB_PASS || "postgres",
+    port: Number(process.env.DB_PORT) || 5432,
+    database: "postgres", // Conectamos a la BD por defecto
+  };
+
+  const adminPool = new Pool(adminPoolConfig);
+  const client = await adminPool.connect();
+
+  try {
+    // Verificar si la BD existe
+    const checkDbQuery = `
+      SELECT 1 FROM pg_database 
+      WHERE datname = $1
+    `;
+    const dbExists = await client.query(checkDbQuery, [dbName]);
+
+    if (dbExists.rows.length === 0) {
+      console.log(`🛠 Creando base de datos ${dbName}...`);
+
+        const createDbQuery = `
+            CREATE DATABASE "${dbName}"
+            WITH OWNER = "${owner}"
+            ENCODING = 'UTF8'
+            LC_COLLATE = 'en_US.UTF-8'
+            LC_CTYPE = 'en_US.UTF-8'
+            TEMPLATE = template0
+            CONNECTION LIMIT = -1;
+        `;
+
+          // Crear la BD con el owner especificado
+          await client.query(createDbQuery);
+
+      console.log(`✅ Base de datos ${dbName} creada con éxito`);
+
+      // Otorgar todos los privilegios al owner
+      await client.query(`GRANT ALL PRIVILEGES ON DATABASE "${dbName}" TO "${owner}";`);
+    } else {
+      console.log(`ℹ️ La base de datos ${dbName} ya existe`);
+    }
+  } catch (error) {
+    console.error(
+      `❌ Error al verificar/crear la base de datos ${dbName}:`,
+      error
+    );
+    throw error;
+  } finally {
+    client.release();
+    adminPool.end();
+  }
+}
+
+
 async function checkPostgreSQLExtensions() {
   const poolConfig: PoolConfig = {
     user: process.env.DB_USER || "entalla",
@@ -49,10 +110,10 @@ async function checkPostgreSQLExtensions() {
         [ext]
       );
       if (res.rows.length === 0) {
-        console.warn(`⚠️ Extensión '${ext}' no disponible`);
+        console.warn(`⚠️ Extensión '' no disponible`);
       } else {
-        console.log(`✅ Extensión '${ext}' instalada`);
-        await client.query(`CREATE EXTENSION IF NOT EXISTS "${ext}"`);
+        console.log(`✅ Extensión '' instalada`);
+        await client.query(`CREATE EXTENSION IF NOT EXISTS ""`);
       }
     }
   } finally {
@@ -64,6 +125,12 @@ async function checkPostgreSQLExtensions() {
 export async function initializeDatabase() {
   try {
     if (!AppDataSource.isInitialized) {
+      // Primero verificar/crear la BD
+      await createDatabaseIfNotExists(
+        process.env.DB_NAME || "entalla",
+        process.env.DB_USER || "entalla"
+      );
+      // Luego el resto de la inicialización
       await checkPostgreSQLExtensions();
       await AppDataSource.initialize();
       console.log("📦 DataSource inicializado correctamente");
@@ -74,3 +141,5 @@ export async function initializeDatabase() {
     throw error;
   }
 }
+
+

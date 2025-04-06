@@ -89,3 +89,13 @@ export async function transformAndValidate<T extends object>(
   await validateOrReject(dto as object);
   return dto;
 }
+
+// Método genérico para construir una instancia a partir de un objeto
+export function fromObject<T extends object>(
+  this: new () => T,
+  obj: Partial<T>
+): T {
+  const instance = new this();
+  Object.assign(instance, obj);
+  return instance;
+}

@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
+
+    import { Injectable } from '@nestjs/common';
+  import { InjectRepository } from '@nestjs/typeorm';
+  import {
   FindManyOptions,
   FindOptionsWhere,
   In,
@@ -9,20 +10,18 @@ import {
   DeleteResult,
   UpdateResult,
 } from 'typeorm';
-import { BaseEntity } from '../entities/base.entity';
-import { Client } from '../entities/client.entity';
-import { generateCacheKey } from 'src/utils/functions';
-import { Cacheable } from '../decorators/cache.decorator';
-import {ClientRepository} from './client.repository'
+ 
+  import { BaseEntity } from '../entities/base.entity';
+  import { Client } from '../entities/client.entity';
+  import { Cacheable } from '../decorators/cache.decorator';
+  import { generateCacheKey } from 'src/utils/functions';
 
-//Logger
+  //Logger
 import { LogExecutionTime } from 'src/common/logger/loggers.functions';
 import { LoggerClient } from 'src/common/logger/logger.client';
 
   @Injectable()
-  export class ClientQueryRepository {
-
-    //Constructor del repositorio de datos: ClientQueryRepository
+  export class ClientRepository {
     constructor(
       @InjectRepository(Client)
       private readonly repository: Repository<Client>
@@ -50,7 +49,8 @@ import { LoggerClient } from 'src/common/logger/logger.client';
       }
     }
 
-
+    
+    //Funciones de Query-Repositories
     @LogExecutionTime({
     layer: 'repository',
     callback: async (logData, client) => {
@@ -60,7 +60,7 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-  })
+    })
     async findAll(options?: FindManyOptions<Client>): Promise<Client[]> {
       return this.repository.find(options);
     }
@@ -75,7 +75,7 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-  })
+    })
     async findById(id: string): Promise<Client | null> {
       const tmp: FindOptionsWhere<Client> = { id } as FindOptionsWhere<Client>;
       return this.repository.findOneBy(tmp);
@@ -91,7 +91,7 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-  })
+    })
     async findByField(
       field: string,
       value: any,
@@ -116,7 +116,7 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-  })
+    })
     async findWithPagination(
       options: FindManyOptions<Client>,
       page: number,
@@ -126,7 +126,6 @@ import { LoggerClient } from 'src/common/logger/logger.client';
       return this.repository.find({ ...options, skip, take: limit });
     }
 
-
     @LogExecutionTime({
     layer: 'repository',
     callback: async (logData, client) => {
@@ -136,12 +135,13 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-  })
+    })
     async count(): Promise<number> {
       return this.repository.count();
     }
 
 
+
     @LogExecutionTime({
     layer: 'repository',
     callback: async (logData, client) => {
@@ -151,7 +151,7 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-  })
+    })
     async findAndCount(where?: Record<string, any>): Promise<[Client[], number]> {
       return this.repository.findAndCount({
         where: where,
@@ -168,7 +168,7 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-  })
+    })
     async findOne(where?: Record<string, any>): Promise<Client | null> {
       return this.repository.findOne({
         where: where,
@@ -176,7 +176,7 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     }
 
 
-@LogExecutionTime({
+    @LogExecutionTime({
     layer: 'repository',
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
@@ -185,7 +185,7 @@ import { LoggerClient } from 'src/common/logger/logger.client';
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-  })
+    })
     async findOneOrFail(where?: Record<string, any>): Promise<Client> {
       const entity = await this.repository.findOne({
         where: where,
@@ -195,4 +195,115 @@ import { LoggerClient } from 'src/common/logger/logger.client';
       }
       return entity;
     }
-}
+
+
+    @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+    })
+     //Funciones de Command-Repositories
+     @Cacheable({ key: (args) => generateCacheKey<Client>('createClient',args[0], args[1]), ttl: 60 })
+      async create(entity: Client): Promise<Client> {
+        return this.repository.save(entity);
+      }
+
+
+    @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+    })
+      @Cacheable({ key: (args) => generateCacheKey<Client[]>('createClients',args[0], args[1]), ttl: 60 })
+      async bulkCreate(entities: Client[]): Promise<Client[]> {
+        return this.repository.save(entities);
+      }
+
+
+
+      @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+    })
+      @Cacheable({ key: (args) => generateCacheKey<Client>('updateClient',args[0], args[1]), ttl: 60 })
+      async update(
+        id: string,
+        partialEntity: Partial<Client>
+      ): Promise<Client | null> {
+        let result: UpdateResult = await this.repository.update(id, partialEntity);
+        return this.repository.findOneBy({ id: id });
+      }
+
+
+      @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+    })
+      @Cacheable({ key: (args) => generateCacheKey<Client[]>('updateClients',args[0], args[1]), ttl: 60 })
+      async bulkUpdate(entities: Partial<Client>[]): Promise<Client[]> {
+        const updatedEntities: Client[] = [];
+        for (const entity of entities) {
+          if (entity.id) {
+            const updatedEntity = await this.update(entity.id, entity);
+            if (updatedEntity) {
+              updatedEntities.push(updatedEntity);
+            }
+          }
+        }
+        return updatedEntities;
+      }
+
+
+      @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+    })
+      @Cacheable({ key: (args) => generateCacheKey<string>('deleteClient',args[0]), ttl: 60 })
+      async delete(id: string): Promise<DeleteResult> {
+        return await this.repository.delete({ id });
+      }
+
+      @LogExecutionTime({
+    layer: 'repository',
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientRepository.name)
+      .get(ClientRepository.name),
+    })
+      @Cacheable({ key: (args) => generateCacheKey<string[]>('deleteClients',args[0]), ttl: 60 })
+      async bulkDelete(ids: string[]): Promise<DeleteResult> {
+        return await this.repository.delete(ids);
+      }
+  }
+  

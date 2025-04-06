@@ -1,32 +1,102 @@
 import { NestFactory } from "@nestjs/core";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { ClientAppModule } from "./app.module";
-import { AppDataSource } from "./data-source";
-import { Logger } from "@nestjs/common";
+import { AppDataSource, createDatabaseIfNotExists } from "./data-source";
+import { INestApplication, Logger } from "@nestjs/common";
 import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
+import 'tsconfig-paths/register';
+import { ClientModule } from "@modules/client/modules/client.module";
+
+
+// Método seguro para inspeccionar rutas
+function printRoutes(app: INestApplication<any>) {
+  const server = app.getHttpServer();
+  const router = server._events.request._router;
+
+  if (!router || !router.stack) {
+    console.warn("No se pudo acceder al router");
+    return;
+  }
+
+  const routes = router.stack
+    .filter((layer) => layer?.route)
+    .map((layer) => ({
+      path: (layer.route as any).path as string,
+      methods: (layer.route as any).methods as Record<string, boolean>,
+    }));
+
+  console.log("=== Rutas Registradas ===");
+  routes.forEach((route) => {
+    const methods = Object.keys(route.methods).filter((m) => route.methods[m]);
+    // 
+  });
+}
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
 
   try {
+    await createDatabaseIfNotExists(
+        process.env.DB_NAME || "entalla",
+        process.env.DB_USER || "entalla"
+    );
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
       logger.log("✅ Database connection established");
     }
-
-    const app = await NestFactory.create(ClientAppModule);
+    console.log(`ℹ️ Creando instancia del módulo ClientAppModule...`);
+    const app = await NestFactory.create(ClientAppModule, {
+      // Configuración de logs
+      bufferLogs: true, // Bufferiza logs hasta que el logger personalizado esté listo
+      logger: process.env.NODE_ENV === 'production' 
+        ? ['error', 'warn', 'log'] 
+        : ['error', 'warn', 'debug', 'log', 'verbose'],
+      
+      // Configuración de rendimiento
+      snapshot: process.env.NODE_ENV !== 'production', // Habilita snapshots en desarrollo
+      abortOnError: false, // No abortar en errores de inicialización
+      
+      // Configuración HTTP
+      cors: {
+        origin: process.env.ALLOWED_ORIGINS?.split(',') || true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: [
+          'Content-Type',
+          'Authorization',
+          'X-Requested-With',
+          'Accept',
+          'X-CSRF-Token'
+        ],
+        credentials: true,
+        maxAge: 86400
+      },
+      
+      // Configuración de parser
+      bodyParser: true,
+      rawBody: process.env.RAW_BODY === 'true', // Para webhooks/stripe
+      
+      // Configuración avanzada
+      forceCloseConnections: true, // Cierra conexiones limpiamente en shutdown
+      autoFlushLogs: true // Envía logs inmediatamente
+    });
     app.enableShutdownHooks();
     const globalPrefix = "api";
     app.setGlobalPrefix(globalPrefix);
-
+    
     const swaggerConfig = new DocumentBuilder()
       .setTitle("Client Service API")
-      .setDescription("API for managing clients")
-      .setVersion("1.0")
-      .addTag("clients")
+      .setDescription('Combined Command & Query API for managing Client')
+      .setVersion('1.0')
+      .addTag('client-command')
+      .addTag('client-query')
       .build();
 
-    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+     
+    console.log(`ℹ️ Creando instancia de documentación swagger para el módulo ClientAppModule...`);
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig,{
+    include: [ClientModule], // ✅ Fuerza incluir todo el módulo
+    deepScanRoutes: true    // ✅ Busca en profundidad
+    });
     const swaggerPath = "api-docs";
     SwaggerModule.setup(swaggerPath, app, swaggerDocument);
 
@@ -34,8 +104,10 @@ async function bootstrap() {
     const host = process.env.HOST || "localhost";
     const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
 
-    await app.listen(port);
-
+    await app.listen(port).then(() => {
+      printRoutes(app);
+    });
+    console.log(`ℹ️ Instancia de aplicación escuchando por el puerto:port `);
     // Acceso seguro a las propiedades con type assertion
     const dbOptions = AppDataSource.options as PostgresConnectionOptions;
 
@@ -60,3 +132,5 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+

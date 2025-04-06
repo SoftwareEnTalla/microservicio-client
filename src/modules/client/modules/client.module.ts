@@ -1,36 +1,57 @@
 import { Module } from "@nestjs/common";
 import { ClientCommandController } from "../controllers/clientcommand.controller";
+import { ClientQueryController } from "../controllers/clientquery.controller";
 import { ClientCommandService } from "../services/clientcommand.service";
+import { ClientQueryService } from "../services/clientquery.service";
 import { ClientCommandRepository } from "../repositories/clientcommand.repository";
+import { ClientQueryRepository } from "../repositories/clientquery.repository";
+import { ClientRepository } from "../repositories/client.repository";
 import { ClientResolver } from "../graphql/client.resolver";
-import { ClientAuthGuard } from "../guards/auth.guard";
-import { ClientLoggingInterceptor } from "../interceptors/logging.interceptor";
+import { ClientAuthGuard } from "../guards/clientauthguard.guard";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Client } from "../entities/client.entity";
-import { ClientQueryService } from "../services/clientquery.service";
-import { ClientQueryRepository } from "../repositories/clientquery.repository";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
-import { ModuleRef } from "@nestjs/core";
+import { CacheModule } from "@nestjs/cache-manager";
+
+//Interceptors
+import { ClientInterceptor } from "../interceptors/client.interceptor";
+import { ClientLoggingInterceptor } from "../interceptors/client.logging.interceptor";
+
 
 @Module({
-  controllers: [ClientCommandController],
-  imports: [TypeOrmModule.forFeature([Client])],
+  imports: [
+    TypeOrmModule.forFeature([Client]), // Asegúrate de incluir esto
+    CacheModule.register(), // Importa el módulo de caché
+  ],
+  controllers: [ClientCommandController, ClientQueryController],
   providers: [
-    ClientCommandRepository,
-    ClientQueryRepository,
     ClientQueryService,
     ClientCommandService,
-    // ClientResolver,
-    EventBus,
-    CommandBus,
-    UnhandledExceptionBus,
+    ClientCommandRepository,
+    ClientQueryRepository,
+    ClientRepository,
+    ClientResolver,
     ClientAuthGuard,
+    ClientInterceptor,
     ClientLoggingInterceptor,
+    UnhandledExceptionBus, // Manejador global de excepciones
+    CommandBus, // Bus de comandos
+    EventBus, // Bus de eventos
   ],
   exports: [
+    ClientQueryService,
+    ClientCommandService,
     ClientCommandRepository,
-    ClientCommandService, // Exportar el servicio si se usa en otros módulos
-    TypeOrmModule, // Exportar TypeOrmModule si se necesitan los repositorios
-  ], // Asegúrate de exportarlo si es necesario
+    ClientQueryRepository,
+    ClientRepository,
+    ClientResolver,
+    ClientAuthGuard,
+    ClientInterceptor,
+    ClientLoggingInterceptor,
+    UnhandledExceptionBus, // Manejador global de excepciones
+    CommandBus, // Bus de comandos
+    EventBus, // Bus de eventos
+  ],
 })
 export class ClientModule {}
+

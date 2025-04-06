@@ -1,160 +1,207 @@
 import {
-  BadRequestException,
-  Body,
   Controller,
-  Delete,
-  Get,
-  Param,
   Post,
+  Body,
   Put,
+  Param,
+  Delete,
+  NotFoundException,
+  Get,
+  Query,
 } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from "@nestjs/swagger";
 import { ClientCommandService } from "../services/clientcommand.service";
-import { Client } from "../entities/client.entity";
+
 import { DeleteResult } from "typeorm";
+import { Logger } from "@nestjs/common";
+import { Helper } from "src/common/helpers/helpers";
+import { Client } from "../entities/client.entity";
+import { ClientResponse, ClientsResponse } from "../types/client.types";
 import { CreateClientDto } from "../dtos/createclient.dto";
 import { UpdateClientDto } from "../dtos/updateclient.dto";
-import { DeleteClientDto } from "../dtos/deleteclient.dto";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { LoggerClient } from "src/common/logger/logger.client";
+import { LogExecutionTime } from "src/common/logger/loggers.functions";
 
-@ApiTags("clients")
-@Controller("clients")
+@ApiTags("Client Command")
+@Controller("clients/command")
 export class ClientCommandController {
-  constructor(private readonly clientCommandService: ClientCommandService) {}
 
-  /**
-   * Crea un nuevo cliente.
-   * @param createClientDto Datos del cliente a crear.
-   * @returns El cliente creado.
-   */
+  #logger = new Logger(ClientCommandController.name);
+
+  //Constructor del controlador: ClientCommandController
+  constructor(private readonly service: ClientCommandService) {}
+
+  @LogExecutionTime({
+    layer: "controller",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientCommandController.name)
+      .get(ClientCommandController.name),
+  })
   @Post()
-  @ApiOperation({ summary: "Crea un nuevo cliente." })
-  @ApiResponse({ status: 200, description: "Cliente creado", type: Client })
-  async create(@Body() createClientDto: CreateClientDto): Promise<Client> {
-    const client = new Client();
-    client.setName = createClientDto.name; // Asigna el nombre del DTO
-    client.creationDate = createClientDto.creationDate;
-    client.modificationDate = createClientDto.modificationDate;
-    client.createdBy = createClientDto.createdBy;
-    client.isActive = createClientDto.isActive;
+  @ApiOperation({ summary: "Create a new client" })
+  @ApiBody({ type: CreateClientDto })
+  @ApiResponse({ status: 201, type: ClientResponse<Client> })
+  async create(
+    @Body() createClientDtoInput: CreateClientDto
+  ): Promise<ClientResponse<Client>> {
+    try {
+      const entity = await this.service.create(createClientDtoInput);
 
-    return this.clientCommandService.create(client);
+      if (!entity) {
+        throw new NotFoundException("Client entity not found.");
+      }
+
+      return entity;
+    } catch (error) {
+      this.#logger.error(error);
+      return Helper.throwCachedError(error);
+    }
   }
 
-  /**
-   * Crea múltiples clientes en una sola operación.
-   * @param createClientDtos Lista de datos de clientes a crear.
-   * @returns Lista de clientes creados.
-   */
+  @LogExecutionTime({
+    layer: "controller",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientCommandController.name)
+      .get(ClientCommandController.name),
+  })
   @Post("bulk")
-  @ApiOperation({ summary: "Crea una colección de Client." })
-  @ApiResponse({ status: 200, description: "Clientes creados", type: Client })
+  @ApiOperation({ summary: "Create multiple clients" })
+  @ApiBody({ type: [CreateClientDto] })
+  @ApiResponse({ status: 201, type: ClientsResponse<Client> })
   async bulkCreate(
-    @Body() createClientDtos: CreateClientDto[]
-  ): Promise<Client[]> {
-    const clients = createClientDtos.map((dto) => {
-      const client = new Client();
-      client.setName = dto.name; // Asigna el nombre del DTO
-      client.creationDate = dto.creationDate;
-      client.modificationDate = dto.modificationDate;
-      client.createdBy = dto.createdBy;
-      client.isActive = dto.isActive;
-      return client;
-    });
-    return this.clientCommandService.bulkCreate(clients);
+    @Body() createClientDtosInput: CreateClientDto[]
+  ): Promise<ClientsResponse<Client>> {
+    try {
+      const entities = await this.service.bulkCreate(createClientDtosInput);
+
+      if (!entities) {
+        throw new NotFoundException("Client entities not found.");
+      }
+
+      return entities;
+    } catch (error) {
+      this.#logger.error(error);
+      return Helper.throwCachedError(error);
+    }
   }
 
-  /**
-   * Elimina un cliente por su ID.
-   * @param id ID del cliente a eliminar.
-   * @returns Resultado de la operación de eliminación.
-   */
-  @Delete(":id")
-  @ApiOperation({
-    summary: "Elimina una instancia de Client por el identificador.",
+  @LogExecutionTime({
+    layer: "controller",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientCommandController.name)
+      .get(ClientCommandController.name),
   })
-  @ApiResponse({ status: 200, description: "Cliente eliminado", type: Client })
-  async delete(@Param("id") id: string): Promise<DeleteResult> {
-    return this.clientCommandService.delete(id);
-  }
-
-  /**
-   * Elimina múltiples clientes por sus IDs.
-   * @param deleteClientDtos Lista de datos de clientes a eliminar.
-   * @returns Resultado de la operación de eliminación.
-   */
-  @Delete("bulk")
-  @ApiOperation({ summary: "Elimina una colección de Client." })
-  @ApiResponse({
-    status: 200,
-    description: "Clientes eliminados",
-    type: Client,
-  })
-  async bulkDelete(
-    @Body() deleteClientDtos: DeleteClientDto[]
-  ): Promise<DeleteResult> {
-    const ids: string[] = deleteClientDtos
-      .map((dto) => dto.id)
-      .filter((id): id is string => typeof id === "string" && id.trim() !== "");
-    return this.clientCommandService.bulkDelete(ids);
-  }
-
-  /**
-   * Actualiza un cliente existente por su ID.
-   * @param id ID del cliente a actualizar.
-   * @param updateClientDto Datos parciales del cliente a actualizar.
-   * @returns El cliente actualizado o null si no se encuentra.
-   */
   @Put(":id")
-  @ApiOperation({ summary: "Actualiza un Client." })
-  @ApiResponse({
-    status: 200,
-    description: "Cliente actualizado",
-    type: Client,
-  })
+  @ApiOperation({ summary: "Update an client" })
+  @ApiBody({ type: UpdateClientDto })
+  @ApiResponse({ status: 200, type: ClientResponse<Client> })
   async update(
     @Param("id") id: string,
-    @Body() updateClientDto: UpdateClientDto
-  ): Promise<Client | null> {
-    const partialEntity: Partial<Client> = {
-      modificationDate: new Date(), // Actualiza la fecha de modificación
-      createdBy: updateClientDto.createdBy,
-      isActive: updateClientDto.isActive,
-    };
-    partialEntity.setName = updateClientDto.name;
-    return this.clientCommandService.update(id, partialEntity);
-  }
-  /**
-   * Actualiza múltiples clientes existentes por sus IDs.
-   * @param updateClientDtos Arreglo de objetos que contienen los IDs y los campos a actualizar.
-   * @returns Lista de clientes actualizados o null si alguno no se encuentra.
-   */
-  @Put("bulk-update")
-  @ApiOperation({ summary: "Actualiza múltiples Clients." })
-  @ApiResponse({
-    status: 200,
-    description: "Clientes actualizados",
-    type: [Client],
-  })
-  async bulkUpdate(
-    @Body() updateClientDtos: UpdateClientDto[]
-  ): Promise<Client[] | null> {
-    // Asegúrate de que todos los DTOs tengan un ID
-    const validEntities = updateClientDtos.filter(
-      (entity) => entity.id && entity
-    );
-
-    if (validEntities.length !== updateClientDtos.length) {
-      throw new BadRequestException(
-        "Todos los DTOs deben incluir un ID y datos de actualización."
+    @Body() partialEntity: UpdateClientDto
+  ): Promise<ClientResponse<Client>> {
+    try {
+      const entity = await this.service.update(
+        id,
+        partialEntity
       );
+
+      if (!entity) {
+        throw new NotFoundException("Client entity not found.");
+      }
+
+      return entity;
+    } catch (error) {
+      this.#logger.error(error);
+      return Helper.throwCachedError(error);
     }
+  }
 
-    const partialEntities = validEntities.map((entity) => ({
-      ...entity,
-      modificationDate: new Date(), // Actualiza la fecha de modificación
-      id: entity.id, // Asocia el DTO con su ID correspondiente
-    }));
+  @LogExecutionTime({
+    layer: "controller",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientCommandController.name)
+      .get(ClientCommandController.name),
+  })
+  @Put("bulk")
+  @ApiOperation({ summary: "Update multiple clients" })
+  @ApiBody({ type: [UpdateClientDto] })
+  @ApiResponse({ status: 200, type: ClientsResponse<Client> })
+  async bulkUpdate(
+    @Body() partialEntities: UpdateClientDto[]
+  ): Promise<ClientsResponse<Client>> {
+    try {
+      const entities = await this.service.bulkUpdate(partialEntities);
 
-    return await this.clientCommandService.bulkUpdate(partialEntities);
+      if (!entities) {
+        throw new NotFoundException("Client entities not found.");
+      }
+
+      return entities;
+    } catch (error) {
+      this.#logger.error(error);
+      return Helper.throwCachedError(error);
+    }
+  }
+
+  @LogExecutionTime({
+    layer: "controller",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientCommandController.name)
+      .get(ClientCommandController.name),
+  })
+  @Delete(":id")
+  @ApiOperation({ summary: "Delete an client" })
+  @ApiResponse({ status: 200, type: ClientResponse<Client> })
+  async delete(@Param("id") id: string): Promise<ClientResponse<Client>> {
+    try {
+      const result = await this.service.delete(id);
+
+      if (!result) {
+        throw new NotFoundException("Client entity not found.");
+      }
+
+      return result;
+    } catch (error) {
+      this.#logger.error(error);
+      return Helper.throwCachedError(error);
+    }
+  }
+
+  @LogExecutionTime({
+    layer: "controller",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientCommandController.name)
+      .get(ClientCommandController.name),
+  })
+  @Delete("bulk")
+  @ApiOperation({ summary: "Delete multiple clients" })
+  @ApiResponse({ status: 200, type: DeleteResult })
+  async bulkDelete(@Query("ids") ids: string[]): Promise<DeleteResult> {
+    return await this.service.bulkDelete(ids);
   }
 }
+

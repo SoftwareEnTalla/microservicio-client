@@ -1,4 +1,4 @@
-export * from "./clientdeleted.event";
+export * from "./clientdeleted.event"; 
 export * from "./clientcreated.event";
 export * from "./clientupdated.event";
 export * from "./base.event";

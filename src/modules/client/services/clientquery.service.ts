@@ -1,137 +1,349 @@
-import { Injectable } from "@nestjs/common";
-import { ClientQueryRepository } from "../repositories/clientquery.repository";
-import { Client } from "../entities/client.entity";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { FindManyOptions } from "typeorm";
+import { Client } from "../entities/client.entity";
+import { BaseEntity } from "../entities/base.entity";
+import { ClientQueryRepository } from "../repositories/clientquery.repository";
+import { ClientResponse, ClientsResponse } from "../types/client.types";
+import { Helper } from "src/common/helpers/helpers";
+import { PaginationArgs } from "src/common/dto/args/pagination.args";
+//import { Cacheable } from "../decorators/cache.decorator";
+
+//Logger
+import { LogExecutionTime } from "src/common/logger/loggers.functions";
+import { LoggerClient } from "src/common/logger/logger.client";
 
 @Injectable()
 export class ClientQueryService {
-  // Constructor del servicio
-  constructor(private readonly repository: ClientQueryRepository) {}
+  // Private properties
+  readonly #logger = new Logger(ClientQueryService.name);
+  private readonly loggerClient = new LoggerClient();
 
-  /**
-   * Encuentra todos los clientes.
-   * @param options Opciones de búsqueda.
-   * @returns Lista de clientes.
-   */
-  async findAll(options?: FindManyOptions<Client>): Promise<Client[]> {
-    return this.repository.findAll(options);
+  constructor(private readonly repository: ClientQueryRepository) {
+    this.validate();
   }
 
-  /**
-   * Encuentra un cliente por su ID.
-   * @param id ID del cliente.
-   * @returns Cliente encontrado o null.
-   */
-  async findById(id: string): Promise<Client | null> {
-    return this.repository.findById(id);
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
+  private validate(): void {
+    try {
+      const entityInstance = Object.create(Client.prototype);
+      if (!(entityInstance instanceof BaseEntity)) {
+        let sms = `El tipo ${Client.name} no extiende de BaseEntity. Asegúrate de que todas las entidades hereden correctamente.`;
+        this.#logger.verbose(sms);
+        throw new Error(sms);
+      }
+    } catch (error) {
+      // Imprimir error
+      this.#logger.error(error);
+      return Helper.throwCachedError(error);
+    }
   }
 
-  /**
-   * Encuentra clientes por un campo específico.
-   * @param field Campo a buscar.
-   * @param value Valor a buscar.
-   * @param page Página de resultados.
-   * @param limit Límites de resultados por página.
-   * @returns Lista de clientes encontrados.
-   */
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
+  async findAll(
+    options?: FindManyOptions<Client>,
+    paginationArgs?: PaginationArgs
+  ): Promise<ClientsResponse<Client>> {
+    try {
+      const clients = await this.repository.findAll(options);
+      // Devolver respuesta
+      this.#logger.verbose("sms");
+      return {
+        ok: true,
+        message: "Listado de clients obtenido con éxito",
+        data: clients,
+        pagination: Helper.getPaginator(
+          paginationArgs ? paginationArgs.page : 1,
+          paginationArgs ? paginationArgs.size : 25,
+          clients.length
+        ),
+        count: clients.length,
+      };
+    } catch (error) {
+      // Imprimir error
+      this.#logger.error(error);
+      // Lanzar error
+      return Helper.throwCachedError(error);
+    }
+  }
+
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
+  async findById(id: string): Promise<ClientResponse<Client>> {
+    try {
+      const client = await this.repository.findOne({
+        where: { id },
+        relations: [],
+      });
+      // Respuesta si el client no existe
+      if (!client)
+        throw new NotFoundException(
+          "Client no encontrado para el id solicitado"
+        );
+      // Devolver client
+      return {
+        ok: true,
+        message: "Client obtenido con éxito",
+        data: client,
+      };
+    } catch (error) {
+      // Imprimir error
+      this.#logger.error(error);
+      // Lanzar error
+      return Helper.throwCachedError(error);
+    }
+  }
+
+
+
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
   async findByField(
     field: string,
     value: any,
-    page: number,
-    limit: number
-  ): Promise<Client[]> {
-    return this.repository.findByField(field, value, page, limit);
-  }
+    paginationArgs?: PaginationArgs
+  ): Promise<ClientsResponse<Client>> {
+    try {
+      const [entities, lenght] = await this.repository.findAndCount({
+        where: { [field]: value },
+        skip:
+          ((paginationArgs ? paginationArgs.page : 1) - 1) *
+          (paginationArgs ? paginationArgs.size : 25),
+        take: paginationArgs ? paginationArgs.size : 25,
+      });
 
-  /**
-   * Encuentra múltiples clientes por sus IDs.
-   * @param ids Lista de IDs.
-   * @param page Página de resultados.
-   * @param limit Límites de resultados por página.
-   * @returns Lista de clientes encontrados.
-   */
-  async findMany(
-    ids: string[],
-    page: number,
-    limit: number
-  ): Promise<Client[] | null> {
-    return this.repository.findMany(ids, page, limit);
+      // Respuesta si el client no existe
+      if (!entities)
+        throw new NotFoundException(
+          "Clients no encontrados para la propiedad y valor especificado"
+        );
+      // Devolver client
+      return {
+        ok: true,
+        message: "Clients obtenidos con éxito.",
+        data: entities,
+        pagination: Helper.getPaginator(
+          paginationArgs ? paginationArgs.page : 1,
+          paginationArgs ? paginationArgs.size : 25,
+          lenght
+        ),
+        count: entities.length,
+      };
+    } catch (error) {
+      // Imprimir error
+      this.#logger.error(error);
+      // Lanzar error
+      return Helper.throwCachedError(error);
+    }
   }
+ 
 
-  /**
-   * Cuenta el número total de clientes.
-   * @returns Número total de clientes.
-   */
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
+  async findWithPagination(
+    options: FindManyOptions<Client>,
+    paginationArgs?: PaginationArgs
+  ): Promise<ClientsResponse<Client>> {
+    try {
+      const entities = await this.repository.findWithPagination(
+        options,
+        paginationArgs ? paginationArgs.page : 1,
+        paginationArgs ? paginationArgs.size : 25
+      );
+
+      // Respuesta si el client no existe
+      if (!entities)
+        throw new NotFoundException("Entidades Clients no encontradas.");
+      // Devolver client
+      return {
+        ok: true,
+        message: "Client obtenido con éxito.",
+        data: entities,
+        count: entities.length,
+      };
+    } catch (error) {
+      // Imprimir error
+      this.#logger.error(error);
+      // Lanzar error
+      return Helper.throwCachedError(error);
+    }
+  }
+  
+
+
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
   async count(): Promise<number> {
     return this.repository.count();
   }
 
-  /**
-   * Encuentra y cuenta clientes según criterios de búsqueda.
-   * @param where Criterios de búsqueda.
-   * @returns Lista de clientes y el conteo total.
-   */
-  async findAndCount(where?: Record<string, any>): Promise<[Client[], number]> {
-    return this.repository.findAndCount(where);
-  }
+ 
 
-  /**
-   * Encuentra un cliente según criterios de búsqueda.
-   * @param where Criterios de búsqueda.
-   * @param relations Relaciones a cargar.
-   * @returns Cliente encontrado o null.
-   */
-  async findOne(
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
+  async findAndCount(
     where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client | null> {
-    return this.repository.findOne(where, relations);
+    paginationArgs?: PaginationArgs
+  ): Promise<ClientsResponse<Client>> {
+    try {
+      const [entities, lenght] = await this.repository.findAndCount({
+        where: where,
+      });
+
+      // Respuesta si el client no existe
+      if (!entities)
+        throw new NotFoundException(
+          "Entidades Clients no encontradas para el criterio especificado."
+        );
+      // Devolver client
+      return {
+        ok: true,
+        message: "Clients obtenidos con éxito.",
+        data: entities,
+        pagination: Helper.getPaginator(
+          paginationArgs ? paginationArgs.page : 1,
+          paginationArgs ? paginationArgs.size : 25,
+          lenght
+        ),
+        count: entities.length,
+      };
+    } catch (error) {
+      // Imprimir error
+      this.#logger.error(error);
+      // Lanzar error
+      return Helper.throwCachedError(error);
+    }
   }
 
-  /**
-   * Encuentra múltiples clientes y cuenta según criterios de búsqueda.
-   * @param where Criterios de búsqueda.
-   * @param relations Relaciones a cargar.
-   * @returns Lista de clientes y el conteo total.
-   */
-  async findManyAndCount(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<[Client[], number]> {
-    return this.repository.findManyAndCount(where, relations);
+
+
+
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
+  async findOne(where?: Record<string, any>): Promise<ClientResponse<Client>> {
+    try {
+      const entity = await this.repository.findOne({
+        where: where,
+      });
+
+      // Respuesta si el client no existe
+      if (!entity)
+        throw new NotFoundException("Entidad Client no encontrada.");
+      // Devolver client
+      return {
+        ok: true,
+        message: "Client obtenido con éxito.",
+        data: entity,
+      };
+    } catch (error) {
+      // Imprimir error
+      this.#logger.error(error);
+      // Lanzar error
+      return Helper.throwCachedError(error);
+    }
   }
 
-  /**
-   * Encuentra un cliente o lanza un error si no se encuentra.
-   * @param where Criterios de búsqueda.
-   * @param relations Relaciones a cargar.
-   * @returns Cliente encontrado.
-   */
+
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      return await client.send(logData);
+    },
+    client: new LoggerClient()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
   async findOneOrFail(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client> {
-    const entity = await this.repository.findOne(where, relations);
-    if (!entity) {
-      throw new Error("Entity not found");
-    }
-    return entity;
-  }
+    where?: Record<string, any>
+  ): Promise<ClientResponse<Client> | Error> {
+    try {
+      const entity = await this.repository.findOne({
+        where: where,
+      });
 
-  /**
-   * Encuentra múltiples clientes o lanza un error si no se encuentran.
-   * @param where Criterios de búsqueda.
-   * @param relations Relaciones a cargar.
-   * @returns Lista de clientes encontrados.
-   */
-  async findManyOrFail(
-    where?: Record<string, any>,
-    relations?: string[]
-  ): Promise<Client[]> {
-    const entities = await this.repository.findManyOrFail(where, relations);
-    if (!entities || entities.length === 0) {
-      throw new Error("Entities not found");
+      // Respuesta si el client no existe
+      if (!entity)
+        return new NotFoundException("Entidad Client no encontrada.");
+      // Devolver client
+      return {
+        ok: true,
+        message: "Client obtenido con éxito.",
+        data: entity,
+      };
+    } catch (error) {
+      // Imprimir error
+      this.#logger.error(error);
+      // Lanzar error
+      return Helper.throwCachedError(error);
     }
-    return entities;
   }
 }
+
+
+

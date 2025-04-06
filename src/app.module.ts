@@ -6,6 +6,17 @@ import { ClientCommandController } from "./modules/client/controllers/clientcomm
 import { ClientModule } from "./modules/client/modules/client.module";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { AppDataSource, initializeDatabase } from "./data-source";
+import { ClientQueryController } from "./modules/client/controllers/clientquery.controller";
+import { GraphQLModule } from "@nestjs/graphql";
+import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
+import { ClientCommandService } from "./modules/client/services/clientcommand.service";
+import { ClientQueryService } from "./modules/client/services/clientquery.service";
+import { CacheModule } from "@nestjs/cache-manager";
+import { LoggingModule } from "./modules/client/modules/logger.module";
+//import GraphQLJSON from "graphql-type-json";
+
+/*
+//TODO unused for while dependencies
 import { I18nModule } from "nestjs-i18n";
 import { join } from "path";
 import { CustomI18nLoader } from "./core/loaders/custom-I18n-Loader";
@@ -13,12 +24,14 @@ import { TranslocoService } from "@jsverse/transloco";
 import { HeaderResolver, AcceptLanguageResolver } from "nestjs-i18n";
 import { TranslocoWrapperService } from "./core/services/transloco-wrapper.service";
 import { TranslocoModule } from "@ngneat/transloco";
-import { ClientQueryController } from "./modules/client/controllers/clientquery.controller";
-import { ClientCommandService } from "./modules/client/services/clientcommand.service";
-import { ClientQueryService } from "./modules/client/services/clientquery.service";
+
+*/
 
 @Module({
   imports: [
+    // Se importa/registra el módulo de caché
+    CacheModule.register(),
+
     /**
      * ConfigModule - Configuración global de variables de entorno
      *
@@ -29,8 +42,9 @@ import { ClientQueryService } from "./modules/client/services/clientquery.servic
       isGlobal: true, // Disponible en todos los módulos sin necesidad de importar
       envFilePath: ".env", // Ubicación del archivo .env
       cache: true, // Mejora rendimiento cacheando las variables
-      expandVariables: true, // Permite usar variables anidadas (ej: ${DB_HOST})
+      expandVariables: true, // Permite usar variables anidadas (ej: )
     }),
+
     /**
      * TypeOrmModule - Configuración de la base de datos
      *
@@ -51,20 +65,45 @@ import { ClientQueryService } from "./modules/client/services/clientquery.servic
         };
       },
     }),
+
     /**
-     * Módulos de la aplicación
+     * Módulos Client de la aplicación
      */
-    ClientModule, // Módulo principal de funcionalidad de clientes
+    ClientModule,
+    /**
+     * Módulo Logger de la aplicación
+     */
+    LoggingModule,
+
+    // Módulo GraphQLModule para Client
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      //autoSchemaFile: "schema.gql", // Opcional: genera un archivo de esquema
+      autoSchemaFile: true,
+      buildSchemaOptions: {
+        dateScalarMode: "timestamp",
+      },
+      // resolvers: { JSON: GraphQLJSON }, // Añade esta línea
+    }),
   ],
+
   /**
-   * Controladores
+   * Controladores de Client
    *
    * Registro de controladores a nivel de aplicación.
    */
-  controllers: [ClientCommandController, ClientQueryController],
+  controllers: [
+  //No se recomienda habilitar los controladores si ya fueron declarados en el módulo: ClientModule
+  /*
+  
+  ClientCommandController, 
+  ClientQueryController
+  
+  */
+  ],
 
   /**
-   * Proveedores (Servicios, Repositorios, etc.)
+   * Proveedores (Servicios, Repositorios, etc.) de Client
    *
    * Registro de servicios globales y configuración de inyección de dependencias.
    */
@@ -78,10 +117,13 @@ import { ClientQueryService } from "./modules/client/services/clientquery.servic
       provide: DataSource, // Token para inyección
       useValue: AppDataSource, // Instancia singleton del DataSource
     },
+    // Se importan los servicios del módulo
+    ClientCommandService,
+    ClientQueryService,
   ],
 
   /**
-   * Exportaciones
+   * Exportaciones de módulos y servicios
    *
    * Hace disponibles módulos y servicios para otros módulos que importen este módulo.
    */
@@ -127,3 +169,5 @@ export class ClientAppModule {
    */
   private setupLanguageChangeHandling() {}
 }
+
+
