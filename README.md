@@ -1,6 +1,6 @@
 # CLIENT Microservice
 
-**Fecha de creación**: 2025-04-06
+**Fecha de creación**: 2025-04-07
 
 **Autor**: Ing. Persy Morell Guerra e Ing. Dailyn García Dominguez (SoftwarEnTalla CEO)
 
@@ -119,6 +119,7 @@
 | | |____6f
 | | |____70
 | | |____71
+| | |____74
 | | |____75
 | | |____78
 | | |____7a
@@ -191,6 +192,7 @@
 | | |____eb
 | | |____ec
 | | |____ed
+| | |____ee
 | | |____ef
 | | |____f0
 | | |____f1
