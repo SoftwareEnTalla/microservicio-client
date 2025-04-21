@@ -1,27 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DeleteResult,
-  Repository,
-  UpdateResult,
-} from 'typeorm';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { DeleteResult, Repository, UpdateResult } from "typeorm";
 
-
-import { BaseEntity } from '../entities/base.entity';
-import { Client } from '../entities/client.entity';
-import { ClientQueryRepository } from './clientquery.repository';
-import { generateCacheKey } from 'src/utils/functions';
-import { Cacheable } from '../decorators/cache.decorator';
-import {ClientRepository} from './client.repository';
+import { BaseEntity } from "../entities/base.entity";
+import { Client } from "../entities/client.entity";
+import { ClientQueryRepository } from "./clientquery.repository";
+import { generateCacheKey } from "src/utils/functions";
+import { Cacheable } from "../decorators/cache.decorator";
+import { ClientRepository } from "./client.repository";
 
 //Logger
-import { LogExecutionTime } from 'src/common/logger/loggers.functions';
-import { LoggerClient } from 'src/common/logger/logger.client';
-
+import { LogExecutionTime } from "src/common/logger/loggers.functions";
+import { LoggerClient } from "src/common/logger/logger.client";
 
 @Injectable()
 export class ClientCommandRepository {
-
   //Constructor del repositorio de datos: ClientCommandRepository
   constructor(
     @InjectRepository(Client)
@@ -32,10 +25,19 @@ export class ClientCommandRepository {
   }
 
   @LogExecutionTime({
-    layer: 'repository',
+    layer: "repository",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
@@ -50,50 +52,85 @@ export class ClientCommandRepository {
       );
     }
   }
-  
+
   @LogExecutionTime({
-    layer: 'repository',
+    layer: "repository",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<Client>('createClient',args[0], args[1]), ttl: 60 })
+  @Cacheable({
+    key: (args) => generateCacheKey<Client>("createClient", args[0], args[1]),
+    ttl: 60,
+  })
   async create(entity: Client): Promise<Client> {
     return this.repository.save(entity);
   }
 
-
   @LogExecutionTime({
-    layer: 'repository',
+    layer: "repository",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<Client[]>('createClients',args[0], args[1]), ttl: 60 })
+  @Cacheable({
+    key: (args) =>
+      generateCacheKey<Client[]>("createClients", args[0], args[1]),
+    ttl: 60,
+  })
   async bulkCreate(entities: Client[]): Promise<Client[]> {
     return this.repository.save(entities);
   }
 
-  
   @LogExecutionTime({
-    layer: 'repository',
+    layer: "repository",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<Client>('updateClient',args[0], args[1]), ttl: 60 })
+  @Cacheable({
+    key: (args) => generateCacheKey<Client>("updateClient", args[0], args[1]),
+    ttl: 60,
+  })
   async update(
     id: string,
     partialEntity: Partial<Client>
@@ -102,18 +139,30 @@ export class ClientCommandRepository {
     return this.clientRepository.findById(id);
   }
 
-
   @LogExecutionTime({
-    layer: 'repository',
+    layer: "repository",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<Client[]>('updateClients',args[0], args[1]), ttl: 60 })
+  @Cacheable({
+    key: (args) =>
+      generateCacheKey<Client[]>("updateClients", args[0], args[1]),
+    ttl: 60,
+  })
   async bulkUpdate(entities: Partial<Client>[]): Promise<Client[]> {
     const updatedEntities: Client[] = [];
     for (const entity of entities) {
@@ -127,34 +176,56 @@ export class ClientCommandRepository {
     return updatedEntities;
   }
 
-
   @LogExecutionTime({
-    layer: 'repository',
+    layer: "repository",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<string>('deleteClient',args[0]), ttl: 60 })
+  @Cacheable({
+    key: (args) => generateCacheKey<string>("deleteClient", args[0]),
+    ttl: 60,
+  })
   async delete(id: string): Promise<DeleteResult> {
     return await this.repository.delete({ id });
   }
 
-
   @LogExecutionTime({
-    layer: 'repository',
+    layer: "repository",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
   })
-  @Cacheable({ key: (args) => generateCacheKey<string[]>('deleteClients',args[0]), ttl: 60 })
+  @Cacheable({
+    key: (args) => generateCacheKey<string[]>("deleteClients", args[0]),
+    ttl: 60,
+  })
   async bulkDelete(ids: string[]): Promise<DeleteResult> {
     return await this.repository.delete(ids);
   }

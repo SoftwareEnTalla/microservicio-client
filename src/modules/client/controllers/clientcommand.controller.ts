@@ -9,7 +9,13 @@ import {
   Get,
   Query,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+} from "@nestjs/swagger";
 import { ClientCommandService } from "../services/clientcommand.service";
 
 import { DeleteResult } from "typeorm";
@@ -27,14 +33,11 @@ import { BadRequestException } from "@nestjs/common";
 @ApiTags("Client Command")
 @Controller("clients/command")
 export class ClientCommandController {
-
   #logger = new Logger(ClientCommandController.name);
 
   //Constructor del controlador: ClientCommandController
   constructor(private readonly service: ClientCommandService) {}
 
-  
-  
   @ApiOperation({ summary: "Create a new client" })
   @ApiBody({ type: CreateClientDto })
   @ApiResponse({ status: 201, type: ClientResponse<Client> })
@@ -43,7 +46,16 @@ export class ClientCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandController.name)
@@ -66,8 +78,6 @@ export class ClientCommandController {
     }
   }
 
-  
-  
   @ApiOperation({ summary: "Create multiple clients" })
   @ApiBody({ type: [CreateClientDto] })
   @ApiResponse({ status: 201, type: ClientsResponse<Client> })
@@ -76,7 +86,16 @@ export class ClientCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandController.name)
@@ -99,8 +118,6 @@ export class ClientCommandController {
     }
   }
 
-  
-  
   @ApiOperation({ summary: "Update an client" })
   @ApiParam({
     name: "id",
@@ -121,7 +138,16 @@ export class ClientCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandController.name)
@@ -151,8 +177,6 @@ export class ClientCommandController {
     }
   }
 
-  
-  
   @ApiOperation({ summary: "Update multiple clients" })
   @ApiBody({ type: [UpdateClientDto] })
   @ApiResponse({ status: 200, type: ClientsResponse<Client> })
@@ -161,7 +185,16 @@ export class ClientCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandController.name)
@@ -184,11 +217,12 @@ export class ClientCommandController {
     }
   }
 
-  
-  
-  @ApiOperation({ summary: "Delete an client" })   
-  @ApiResponse({ status: 200, type: ClientResponse<Client>,description:
-    "Instancia de Client eliminada satisfactoriamente.", })
+  @ApiOperation({ summary: "Delete an client" })
+  @ApiResponse({
+    status: 200,
+    type: ClientResponse<Client>,
+    description: "Instancia de Client eliminada satisfactoriamente.",
+  })
   @ApiResponse({
     status: 400,
     description:
@@ -199,7 +233,16 @@ export class ClientCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandController.name)
@@ -207,7 +250,6 @@ export class ClientCommandController {
   })
   async delete(@Param("id") id: string): Promise<ClientResponse<Client>> {
     try {
-       
       const result = await this.service.delete(id);
 
       if (!result) {
@@ -221,8 +263,6 @@ export class ClientCommandController {
     }
   }
 
-  
-  
   @ApiOperation({ summary: "Delete multiple clients" })
   @ApiResponse({ status: 200, type: DeleteResult })
   @Delete("bulk")
@@ -230,7 +270,16 @@ export class ClientCommandController {
     layer: "controller",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandController.name)
@@ -240,4 +289,3 @@ export class ClientCommandController {
     return await this.service.bulkDelete(ids);
   }
 }
-

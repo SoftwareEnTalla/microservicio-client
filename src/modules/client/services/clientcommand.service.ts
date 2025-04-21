@@ -26,12 +26,20 @@ export class ClientCommandService {
     //Inicialice aquí propiedades o atributos
   }
 
-
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandService.name)
@@ -51,8 +59,7 @@ export class ClientCommandService {
       );
 
       // Respuesta si el client no existe
-      if (!entity)
-        throw new NotFoundException("Entidad Client no encontrada.");
+      if (!entity) throw new NotFoundException("Entidad Client no encontrada.");
       // Devolver client
       return {
         ok: true,
@@ -67,20 +74,27 @@ export class ClientCommandService {
     }
   }
 
-
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandService.name)
       .get(ClientCommandService.name),
   })
   @Cacheable({
-    key: (args) =>
-      generateCacheKey<Client>("createClients", args[0], args[1]),
+    key: (args) => generateCacheKey<Client>("createClients", args[0], args[1]),
     ttl: 60,
   })
   async bulkCreate(
@@ -109,12 +123,20 @@ export class ClientCommandService {
     }
   }
 
-
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandService.name)
@@ -151,20 +173,27 @@ export class ClientCommandService {
     }
   }
 
-
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandService.name)
       .get(ClientCommandService.name),
   })
   @Cacheable({
-    key: (args) =>
-      generateCacheKey<UpdateClientDto>("updateClients", args[0]),
+    key: (args) => generateCacheKey<UpdateClientDto>("updateClients", args[0]),
     ttl: 60,
   })
   async bulkUpdate(
@@ -192,11 +221,20 @@ export class ClientCommandService {
     }
   }
 
-   @LogExecutionTime({
+  @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandService.name)
@@ -233,7 +271,16 @@ export class ClientCommandService {
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      return await client.send(logData);
+      try {
+        return await client.send(logData);
+      } catch (error) {
+        console.info(
+          "Ha ocurrido un error al enviar la traza de log: ",
+          logData
+        );
+        console.info("ERROR-LOG: ", error);
+        throw error;
+      }
     },
     client: new LoggerClient()
       .registerClient(ClientCommandService.name)
@@ -247,4 +294,3 @@ export class ClientCommandService {
     return await this.repository.bulkDelete(ids);
   }
 }
-
