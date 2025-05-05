@@ -29,12 +29,21 @@
  */
 
 
-import { IQuery } from '@nestjs/cqrs';
-//import { PayloadEvent } from '../events/base.event';
+import { Injectable } from "@nestjs/common";
+import { KafkaService } from "./kafka.service";
+import { IEvent, IEventBus } from "@nestjs/cqrs";
 
-export abstract class BaseQuery implements IQuery {
-  //Constructor de BaseQuery
-  constructor(public readonly metadata?: Record<string, any>) {
-    //Aquí coloca implementación escencial no más de BaseQuery
+@Injectable()
+export class KafkaEventBus implements IEventBus {
+  constructor(private readonly kafkaService: KafkaService) {}
+
+  publish<T extends IEvent>(event: T) {
+    const topic = event.constructor.name.toLowerCase().replace("event", "");
+    this.kafkaService.sendMessage(topic, event);
+  }
+
+  publishAll(events: IEvent[]) {
+    events.forEach((event) => this.publish(event));
   }
 }
+

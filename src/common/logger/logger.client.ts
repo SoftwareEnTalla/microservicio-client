@@ -3,14 +3,23 @@ import { Injectable } from "@nestjs/common";
 import { HttpLoggerApiRest, ILoggerClient } from "src/interfaces/log-context";
 import { LoggerCallback } from "../types/logger.type";
 import { HttpLoggerClient } from "./http-logger.client";
+import { getRemoteApiLoggerUrl } from "./loggers.functions";
 import * as dotenv from "dotenv";
+import { logger } from "@core/logs/logger";
 
 @Injectable()
 export class LoggerClient {
   private clients: Map<string, ILoggerClient> = new Map();
+  public static loggerClient: LoggerClient;
 
-  constructor() {
+  private constructor() {
     dotenv.config();
+  }
+
+  public static getInstance(): LoggerClient {
+    if (this.loggerClient === null || this.loggerClient === undefined)
+      this.loggerClient = new LoggerClient();
+    return this.loggerClient;
   }
 
   /**
@@ -20,9 +29,7 @@ export class LoggerClient {
    */
   registerClient(name: string, client?: ILoggerClient): LoggerClient {
     if (client == null)
-      client = new HttpLoggerClient(
-        process.env.LOG_API_BASE_URL || "https://logs.api"
-      );
+      client = new HttpLoggerClient(getRemoteApiLoggerUrl(), false);
     if (!this.has(name)) this.clients.set(name, client);
     return this;
   }
@@ -68,19 +75,19 @@ export class LoggerClient {
         const success = connected ? await callback(logData, client) : connected;
 
         if (!success) {
-          console.error(
+          logger.error(
             connected
               ? `LoggerClient: Callback failed for client ${name}`
               : `LoggerClient: Callback failed for client connection failed`
           );
         }
       } catch (error) {
-        console.error(`LoggerClient: Error with client ${name}`, error);
+        logger.error(`LoggerClient: Error with client ${name}`, error);
       } finally {
         try {
           await client.close();
         } catch (closeError) {
-          console.error(
+          logger.error(
             `LoggerClient: Error closing client ${name}`,
             closeError
           );
@@ -98,19 +105,19 @@ export class LoggerClient {
         const connected = await client.connect();
         const success = connected ? await client.send(logData) : connected;
         if (!success) {
-          console.error(
+          logger.error(
             connected
               ? `LoggerClient: Send failed for client ${name}`
               : `LoggerClient: Callback failed for client connection failed`
           );
         }
       } catch (error) {
-        console.error(`LoggerClient: Error with client ${name}`, error);
+        logger.error(`LoggerClient: Error with client ${name}`, error);
       } finally {
         try {
           await client.close();
         } catch (closeError) {
-          console.error(
+          logger.error(
             `LoggerClient: Error closing client ${name}`,
             closeError
           );

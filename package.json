@@ -45,6 +45,7 @@
     "dotenv": "^16.4.7",
     "esm": "^3.2.25",
     "graphql": "^16.10.0",
+    "https-proxy-agent": "^7.0.6",
     "i18n": "^0.15.1",
     "joi": "^17.13.3",
     "kafkajs": "^2.2.4",
@@ -53,6 +54,7 @@
     "passport-headerapikey": "^1.2.2",
     "pg": "^8.13.1",
     "rxjs": "^7.8.2",
+    "uri-js": "^4.4.1",
     "uuid": "^11.1.0",
     "winston": "^3.17.0"
   },
@@ -93,6 +95,4 @@
     "testEnvironment": "node"
   }
 }
-
-
 

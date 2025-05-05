@@ -14,6 +14,8 @@ import {
   ValidationError,
 } from "class-validator";
 
+import { ApiProperty } from "@nestjs/swagger";
+
 @ObjectType({ description: "Tipado para los correos electrónicos" })
 export class Email {
   @Field(() => String, { description: "Correo electrónico", nullable: true })
@@ -95,37 +97,72 @@ registerEnumType(Gender, {
 });
 
 export enum OrderBy {
-  asd = "asc",
+  asc = "asc",
   desc = "desc",
 }
+
+export function valueOfOrderBy(value: string): OrderBy {
+  const normalizedValue = value.toLowerCase().trim();
+
+  switch (normalizedValue) {
+    case "asc":
+      return OrderBy.asc;
+    case "desc":
+      return OrderBy.desc;
+    default:
+      return OrderBy.asc; // Valor por defecto
+  }
+}
+
+registerEnumType(OrderBy, {
+  name: "OrderBy", // 🔹 Nombre único para GraphQL
+  description: "Orden ascendente o descendente",
+});
 
 export class PaginationParamsDto {
   @IsInt()
   @IsOptional()
+  @Field(() => Number, { nullable: true })
   page: number = 0;
 
   @IsInt()
   @IsOptional()
+  @Field(() => Number, { nullable: true })
   size: number = 50;
 
   @IsString()
   @IsOptional()
+  @Field(() => String, { nullable: true })
   sort: string = "";
 
+  @ApiProperty({
+    enum: OrderBy,
+    enumName: "OrderBy", // 🔹 Nombre para Swagger
+    description: "Orden de clasificación (asc/desc)",
+    default: OrderBy.asc,
+  })
   @IsString()
   @IsOptional()
-  order: OrderBy = OrderBy.asd;
+  @Field(() => OrderBy, {
+    nullable: true,
+    defaultValue: OrderBy.asc,
+    description: "Orden de clasificación (asc/desc)",
+  })
+  order: OrderBy = OrderBy.asc;
 
   @IsString()
   @IsOptional()
+  @Field(() => String, { nullable: true })
   search: string = "";
 
   @IsString()
   @IsOptional()
+  @Field(() => String, { nullable: true })
   status: string = "";
 
   @IsString()
   @IsOptional()
+  @Field(() => String, { nullable: true })
   role: string = "";
 }
 

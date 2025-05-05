@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { HashMap, Translation, TranslocoService } from "@jsverse/transloco";
 import { getTranslocoConfig } from "../configs/transloco.config";
+import { ServiceRegistry } from "@core/service-registry";
 
 // Define interfaces locales para evitar imports problemáticos
 interface TranslocoConfig {
@@ -18,6 +19,7 @@ export class TranslocoWrapperService implements OnModuleInit {
 
   async onModuleInit() {
     //await this.initializeTransloco();
+    ServiceRegistry.getInstance().registry(this);
   }
 
   getTranslocoService() {

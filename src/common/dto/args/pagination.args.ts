@@ -1,7 +1,7 @@
 // Nest Modules
 import { ArgsType, Field, Int, registerEnumType } from "@nestjs/graphql";
 import { Transform } from "class-transformer";
-
+import { OrderBy } from "src/common/types/common.types";
 // Third's Modules
 import { IsDate, IsOptional, IsString, Min } from "class-validator";
 
@@ -65,13 +65,13 @@ export class PaginationArgs {
   })
   sort: string = "createdAt";
 
-  @Field(() => Order, {
+  @Field(() => OrderBy, {
     description: "Orden de los datos",
     nullable: true,
     defaultValue: "asc",
   })
   @IsOptional()
-  order: Order = Order.asc;
+  order: OrderBy = OrderBy.asc;
 
   @Field(() => String, { description: "Término de búsqueda", nullable: true })
   @IsOptional()
@@ -115,7 +115,7 @@ export class PaginationArgs {
     page?: number,
     size?: number,
     sort?: string,
-    order?: Order,
+    order?: OrderBy,
     search?: string,
     initDate?: Date,
     endDate?: Date
@@ -125,7 +125,7 @@ export class PaginationArgs {
     paginationArgs.page = page || 1; // Asigna valor por defecto
     paginationArgs.size = size || 25; // Asigna valor por defecto
     paginationArgs.sort = sort || "createdAt"; // Asigna valor por defecto
-    paginationArgs.order = order || Order.asc; // Asigna valor por defecto
+    paginationArgs.order = order || OrderBy.asc; // Asigna valor por defecto
     paginationArgs.search = search || ""; // Asigna valor por defecto
     paginationArgs.initDate = initDate; // Puede ser undefined si no se proporciona
     paginationArgs.endDate = endDate; // Puede ser undefined si no se proporciona
@@ -167,13 +167,13 @@ export class FilterArgs {
   })
   sort: string = "createdAt";
 
-  @Field(() => Order, {
+  @Field(() => OrderBy, {
     description: "Orden de los datos",
     nullable: true,
     defaultValue: "asc",
   })
   @IsOptional()
-  order: string = Order.asc;
+  order: string = OrderBy.asc;
 
   @Field(() => String, {
     description: "Término de búsqueda",
@@ -186,21 +186,3 @@ export class FilterArgs {
   })
   search?: string;
 }
-
-export enum Order {
-  asc = "asc",
-  desc = "desc",
-}
-
-registerEnumType(Order, {
-  name: "Order",
-  description: "Enumeración de ordenado válidos",
-  valuesMap: {
-    asc: {
-      description: "Orden ascendente",
-    },
-    desc: {
-      description: "Orden descendente",
-    },
-  },
-});

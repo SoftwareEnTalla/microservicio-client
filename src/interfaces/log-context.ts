@@ -13,6 +13,7 @@ export interface HttpLoggerApiRest {
     layer?: string;
     uuid?: string;
     refuuid?: string;
+    className?: string;
     functionName: string;
     startTime: string;
     endTime?: string;

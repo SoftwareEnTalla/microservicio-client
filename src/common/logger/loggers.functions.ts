@@ -1,4 +1,3 @@
-import { Logger } from "@nestjs/common";
 import { performance } from "perf_hooks";
 import {
   HttpLoggerApiRest,
@@ -7,6 +6,7 @@ import {
   LogExecutionTimeOptions,
 } from "src/interfaces/log-context";
 import { v4 as uuidv4 } from "uuid";
+import { logger } from "@core/logs/logger";
 
 function getEnhancedContext(): LogContext {
   const error = new Error();
@@ -29,22 +29,35 @@ function getEnhancedContext(): LogContext {
   return { className: "Global", functionName: "anonymous" };
 }
 
+export function getRemoteApiLoggerUrl(): string {
+  let createUrl: string = process.env.LOG_API_BASE_URL || "https://logs.api";
+  createUrl += process.env.LOG_API_SCOPE
+    ? `/${process.env.LOG_API_SCOPE}`
+    : "/codetrace";
+  createUrl += process.env.LOG_API_CREATE_ACTION
+    ? `/${process.env.LOG_API_CREATE_ACTION}`
+    : "/command";
+  return createUrl;
+}
 export function LogExecutionTime(options: LogExecutionTimeOptions) {
   return function (
     target: any,
     propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
-    const logger = new Logger(target.constructor.name);
-    const originalMethod = descriptor.value;
+    const enabled =
+      process.env.LOG_EXECUTION_TIME === "true" &&
+      process.env.LOG_READY === "true";
 
+    if (!enabled) return descriptor; // si no está habilitado
+
+    const originalMethod = descriptor.value;
     descriptor.value = async function (...args: any[]) {
       const uuid = uuidv4();
       const start = performance.now();
       const startTime = new Date().toISOString();
       const context = getEnhancedContext();
 
-      // Destructuración con valores por defecto
       const {
         layer = "default",
         refuuid,
@@ -54,7 +67,7 @@ export function LogExecutionTime(options: LogExecutionTimeOptions) {
       } = options;
 
       logger.log(
-        `[${layer}] [${context.functionName}] [${uuid}] Inicio ejecución`
+        `[${layer}] [${target.constructor.name}.${propertyKey}] [${uuid}] Inicio ejecución` // Incluye el nombre de la clase
       );
 
       try {
@@ -65,18 +78,18 @@ export function LogExecutionTime(options: LogExecutionTimeOptions) {
         const duration = calculateDuration(durationMs, timeFormat);
 
         logger.log(
-          `[${layer}] [${context.functionName}] [${uuid}] Ejecución completada (${duration}${timeFormat})`
+          `[${layer}] [${target.constructor.name}.${propertyKey}] [${uuid}] Ejecución completada (${duration}${timeFormat})`
         );
 
-        // Preparar datos del log
         const logData: HttpLoggerApiRest = {
-          endpoint: "your-log-api-endpoint",
+          endpoint: getRemoteApiLoggerUrl(),
           method: "POST",
           body: {
             layer,
             uuid,
             refuuid,
-            functionName: context.functionName,
+            className: target.constructor.name,
+            functionName: `${target.constructor.name}.${propertyKey}`, // Nombre de la clase y método
             startTime,
             endTime: new Date().toISOString(),
             duration: durationMs,
@@ -84,8 +97,8 @@ export function LogExecutionTime(options: LogExecutionTimeOptions) {
             status: "success",
           },
         };
-        // Manejo del envío
-        if (client) await handleLogDelivery(client, logData, callback, logger);
+
+        if (client) await handleLogDelivery(client, logData, callback);
 
         return result;
       } catch (error: any) {
@@ -94,19 +107,19 @@ export function LogExecutionTime(options: LogExecutionTimeOptions) {
         const duration = calculateDuration(durationMs, timeFormat);
 
         logger.error(
-          `[${layer}] [${context.functionName}] [${uuid}] Error en ejecución (${duration}${timeFormat}): ${error.message}`,
+          `[${layer}] [${target.constructor.name}.${propertyKey}] [${uuid}] Error en ejecución (${duration}${timeFormat}): ${error.message}`,
           error.stack
         );
 
-        // Preparar datos del log de error
         const errorLogData: HttpLoggerApiRest = {
-          endpoint: "your-log-api-endpoint",
+          endpoint: getRemoteApiLoggerUrl(),
           method: "POST",
           body: {
             layer,
             uuid,
             refuuid,
-            functionName: context.functionName,
+            className: target.constructor.name,
+            functionName: `${target.constructor.name}.${propertyKey}`, // Nombre de la clase y método
             startTime,
             endTime: new Date().toISOString(),
             duration: durationMs,
@@ -119,9 +132,7 @@ export function LogExecutionTime(options: LogExecutionTimeOptions) {
           },
         };
 
-        // Manejo del envío del error
-        if (client)
-          await handleLogDelivery(client, errorLogData, callback, logger);
+        if (client) await handleLogDelivery(client, errorLogData, callback);
 
         throw error;
       }
@@ -131,14 +142,32 @@ export function LogExecutionTime(options: LogExecutionTimeOptions) {
   };
 }
 
+// Función para obtener información del archivo y línea
+function getFileInfo(): [string, number] {
+  const stack = new Error().stack;
+  if (!stack) return ["No se pudo obtener información del archivo", -1];
+
+  const stackLines = stack.split("\n");
+
+  // Buscamos la línea que contiene el nombre del método decorado
+  const methodCallIndex = 2; // Ajusta este índice según la posición en la pila
+  const match = stackLines[methodCallIndex]?.match(/\s*at\s+(.*?):(\d+):\d+/); // Captura el archivo y la línea
+
+  if (match) {
+    const filePath = match[1]; // Nombre del archivo
+    const lineNumber = parseInt(match[2], 10); // Número de línea
+    return [filePath, lineNumber];
+  }
+
+  return ["No se pudo obtener información del archivo", -1];
+}
 // Función auxiliar para manejar el envío de logs
 async function handleLogDelivery(
   client: ILoggerClient,
   logData: HttpLoggerApiRest,
   callback:
     | ((data: HttpLoggerApiRest, client: ILoggerClient) => Promise<boolean>)
-    | undefined,
-  logger: Logger
+    | undefined
 ) {
   try {
     const connected = await client.connect();
@@ -188,7 +217,6 @@ export function withLogging<T extends (...args: any[]) => any>(
   fn: T,
   contextName = "Global"
 ): T {
-  const logger = new Logger(contextName);
   const functionName = fn.name || "anonymous";
 
   return async function (...args: Parameters<T>) {
@@ -215,4 +243,132 @@ export function withLogging<T extends (...args: any[]) => any>(
       throw error;
     }
   } as T;
+}
+
+/**
+ * Decorador para trazar llamadas a funciones/métodos
+ * Registra el archivo y línea donde se invoca la función
+ */
+export function FunctionTrace(contextName?: string): MethodDecorator {
+  return function (
+    target: any,
+    propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<any>
+  ) {
+    const enabled =
+      process.env.LOG_EXECUTION_TIME === "true" &&
+      process.env.LOG_READY === "true";
+    // Guard clause para propiedades (no métodos)
+    if (!descriptor || !descriptor.value || !enabled) {
+      return;
+    }
+
+    const originalMethod = descriptor.value;
+    const className = target.constructor?.name || "AnonymousClass";
+    const methodName = String(propertyKey);
+
+    descriptor.value = function (...args: any[]) {
+      const [filePath, lineNumber] = getCallerInfo();
+      const traceId = generateShortId();
+
+      logger.debug(
+        `[TRACE] ${className}.${methodName} called from ${filePath}:${lineNumber} (ID: ${traceId})`
+      );
+
+      try {
+        const result = originalMethod.apply(this, args);
+
+        // Manejar promesas para métodos async
+        if (result instanceof Promise) {
+          return result
+            .then((res) => {
+              logger.debug(
+                `[TRACE] ${className}.${methodName} completed (ID: ${traceId})`
+              );
+              return res;
+            })
+            .catch((error) => {
+              logger.error(
+                `[TRACE] ${className}.${methodName} failed from ${filePath}:${lineNumber} (ID: ${traceId}): ${error.message}`
+              );
+              throw error;
+            });
+        }
+
+        logger.debug(
+          `[TRACE] ${className}.${methodName} completed (ID: ${traceId})`
+        );
+        return result;
+      } catch (error: any) {
+        logger.error(
+          `[TRACE] ${className}.${methodName} failed from ${filePath}:${lineNumber} (ID: ${traceId}): ${error.message}`
+        );
+        throw error;
+      }
+    };
+
+    return descriptor;
+  };
+}
+
+// Función auxiliar para obtener información del llamador
+function getCallerInfo(): [string, number] {
+  const stack = new Error().stack?.split("\n") || [];
+
+  // El índice 3 es donde está el llamador real (ajustar según necesidad)
+  const callerLine = stack[3] || "";
+
+  const match =
+    callerLine.match(/\(?(.+):(\d+):\d+\)?/) ||
+    callerLine.match(/\s+at\s+(.+):(\d+):\d+/);
+
+  if (match) {
+    return [match[1], parseInt(match[2])];
+  }
+
+  return ["unknown", 0];
+}
+
+// Genera un ID corto para trazar la llamada
+function generateShortId(): string {
+  return Math.random().toString(36).substring(2, 8);
+}
+// Versión para funciones independientes
+function traceFunction(fn: Function, contextName?: string) {
+  const functionName = fn.name || "anonymous";
+
+  return function (...args: any[]) {
+    const [filePath, lineNumber] = getCallerInfo();
+    const traceId = generateShortId();
+
+    logger.debug(
+      `[TRACE] ${functionName} called from ${filePath}:${lineNumber} (ID: ${traceId}) on contextName=[${contextName}]`
+    );
+
+    try {
+      const result = fn(...args);
+
+      if (result instanceof Promise) {
+        return result
+          .then((res) => {
+            logger.debug(`[TRACE] ${functionName} completed (ID: ${traceId})`);
+            return res;
+          })
+          .catch((error) => {
+            logger.error(
+              `[TRACE] ${functionName} failed from ${filePath}:${lineNumber} (ID: ${traceId}): ${error.message}`
+            );
+            throw error;
+          });
+      }
+
+      logger.debug(`[TRACE] ${functionName} completed (ID: ${traceId})`);
+      return result;
+    } catch (error: any) {
+      logger.error(
+        `[TRACE] ${functionName} failed from ${filePath}:${lineNumber} (ID: ${traceId}): ${error.message}`
+      );
+      throw error;
+    }
+  };
 }
