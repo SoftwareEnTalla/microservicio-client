@@ -1,4 +1,35 @@
-import { DynamicModule, Module } from "@nestjs/common";
+/*
+ * Copyright (c) 2025 SoftwarEnTalla
+ * Licencia: MIT
+ * Contacto: softwarentalla@gmail.com
+ * CEOs: 
+ *       Persy Morell Guerra      Email: pmorellpersi@gmail.com  Phone : +53-5336-4654 Linkedin: https://www.linkedin.com/in/persy-morell-guerra-288943357/
+ *       Dailyn García Domínguez  Email: dailyngd@gmail.com      Phone : +53-5432-0312 Linkedin: https://www.linkedin.com/in/dailyn-dominguez-3150799b/
+ *
+ * CTO: Persy Morell Guerra
+ * COO: Dailyn García Domínguez and Persy Morell Guerra
+ * CFO: Dailyn García Domínguez and Persy Morell Guerra
+ *
+ * Repositories: 
+ *               https://github.com/SoftwareEnTalla 
+ *
+ *               https://github.com/apokaliptolesamale?tab=repositories
+ *
+ *
+ * Social Networks:
+ *
+ *              https://x.com/SoftwarEnTalla
+ *
+ *              https://www.facebook.com/profile.php?id=61572625716568
+ *
+ *              https://www.instagram.com/softwarentalla/
+ *              
+ *
+ *
+ */
+
+
+import { DynamicModule, Module, OnModuleInit } from "@nestjs/common";
 import { DataSource } from "typeorm";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule } from "@nestjs/config";
@@ -13,6 +44,10 @@ import { ClientCommandService } from "./modules/client/services/clientcommand.se
 import { ClientQueryService } from "./modules/client/services/clientquery.service";
 import { CacheModule } from "@nestjs/cache-manager";
 import { LoggingModule } from "./modules/client/modules/logger.module";
+import { ModuleRef } from "@nestjs/core";
+import { ServiceRegistry } from "@core/service-registry";
+import LoggerService, { logger } from "@core/logs/logger";
+
 //import GraphQLJSON from "graphql-type-json";
 
 /*
@@ -24,6 +59,7 @@ import { TranslocoService } from "@jsverse/transloco";
 import { HeaderResolver, AcceptLanguageResolver } from "nestjs-i18n";
 import { TranslocoWrapperService } from "./core/services/transloco-wrapper.service";
 import { TranslocoModule } from "@ngneat/transloco";
+import LoggerService, { logger } from "@core/logs/logger";
 
 */
 
@@ -120,6 +156,7 @@ import { TranslocoModule } from "@ngneat/transloco";
     // Se importan los servicios del módulo
     ClientCommandService,
     ClientQueryService,
+    LoggerService
   ],
 
   /**
@@ -127,22 +164,36 @@ import { TranslocoModule } from "@ngneat/transloco";
    *
    * Hace disponibles módulos y servicios para otros módulos que importen este módulo.
    */
-  exports: [ClientCommandService, ClientQueryService],
+  exports: [ClientCommandService, ClientQueryService,LoggerService],
 })
-export class ClientAppModule {
+export class ClientAppModule implements OnModuleInit {
   /**
    * Constructor del módulo principal
    * @param dataSource Instancia inyectada del DataSource
    * @param translocoService Servicio para manejo de idiomas
    */
   constructor(
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private moduleRef: ModuleRef
     //private readonly translocoService: TranslocoService
   ) {
     this.checkDatabaseConnection();
     this.setupLanguageChangeHandling();
+    this.onModuleInit();
   }
-
+  onModuleInit() {
+    //Inicializar servicios del microservicio
+    ServiceRegistry.getInstance().setModuleRef(this.moduleRef);
+    ServiceRegistry.getInstance().registryAll([
+      ClientCommandService,
+      ClientQueryService,
+    ]);
+    const loggerService = ServiceRegistry.getInstance().get(
+      "LoggerService"
+    ) as LoggerService;
+    if (loggerService) 
+    loggerService.log(ServiceRegistry.getInstance());
+  }
   /**
    * Verifica la conexión a la base de datos al iniciar
    *
@@ -152,9 +203,9 @@ export class ClientAppModule {
   private async checkDatabaseConnection() {
     try {
       await this.dataSource.query("SELECT 1");
-      console.log("✅ Conexión a la base de datos verificada correctamente");
+      logger.log("✅ Conexión a la base de datos verificada correctamente");
     } catch (error) {
-      console.error(
+      logger.error(
         "❌ Error crítico: No se pudo conectar a la base de datos",
         error
       );

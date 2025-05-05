@@ -1,3 +1,34 @@
+/*
+ * Copyright (c) 2025 SoftwarEnTalla
+ * Licencia: MIT
+ * Contacto: softwarentalla@gmail.com
+ * CEOs: 
+ *       Persy Morell Guerra      Email: pmorellpersi@gmail.com  Phone : +53-5336-4654 Linkedin: https://www.linkedin.com/in/persy-morell-guerra-288943357/
+ *       Dailyn García Domínguez  Email: dailyngd@gmail.com      Phone : +53-5432-0312 Linkedin: https://www.linkedin.com/in/dailyn-dominguez-3150799b/
+ *
+ * CTO: Persy Morell Guerra
+ * COO: Dailyn García Domínguez and Persy Morell Guerra
+ * CFO: Dailyn García Domínguez and Persy Morell Guerra
+ *
+ * Repositories: 
+ *               https://github.com/SoftwareEnTalla 
+ *
+ *               https://github.com/apokaliptolesamale?tab=repositories
+ *
+ *
+ * Social Networks:
+ *
+ *              https://x.com/SoftwarEnTalla
+ *
+ *              https://www.facebook.com/profile.php?id=61572625716568
+ *
+ *              https://www.instagram.com/softwarentalla/
+ *              
+ *
+ *
+ */
+
+
 import { NestFactory } from "@nestjs/core";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { ClientAppModule } from "./app.module";
@@ -7,14 +38,23 @@ import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConne
 import 'tsconfig-paths/register';
 import { ClientModule } from "@modules/client/modules/client.module";
 import { setupSwagger } from "@config/swagger-config";
+import * as dotenv from "dotenv";
+import { logger } from '@core/logs/logger';
+
+import { join } from "path";
+import { loadEnv, watchEnvChanges } from "@core/loaders/load-enviroments";
+
+const envPath = join(process.cwd(), ".env");
+loadEnv(envPath);
+watchEnvChanges(envPath);
 
 // Método seguro para inspeccionar rutas
 function printRoutes(app: INestApplication<any>) {
   const server = app.getHttpServer();
   const router = server._events.request._router;
 
-  if (!router || !router.stack) {
-    console.warn("No se pudo acceder al router");
+  if (!router || (router && !router.stack)) {
+    logger.warn("No se pudo acceder al router");
     return;
   }
 
@@ -25,7 +65,7 @@ function printRoutes(app: INestApplication<any>) {
       methods: (layer.route as any).methods as Record<string, boolean>,
     }));
 
-  console.log("=== Rutas Registradas ===");
+  logger.log("=== Rutas Registradas ===");
   routes.forEach((route) => {
     const methods = Object.keys(route.methods).filter((m) => route.methods[m]);
     // 
@@ -33,6 +73,7 @@ function printRoutes(app: INestApplication<any>) {
 }
 
 async function bootstrap() {
+  dotenv.config();
   const logger = new Logger("Bootstrap");
 
   try {
@@ -42,9 +83,9 @@ async function bootstrap() {
     );
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
-      logger.log("✅ Database connection established");
+      logger.success("Database connection established");
     }
-    console.log(`ℹ️ Creando instancia del módulo ClientAppModule...`);
+    logger.info(`ℹCreando instancia del módulo ClientAppModule...`);
     const app = await NestFactory.create(ClientAppModule, {
       // Configuración de logs
       bufferLogs: true, // Bufferiza logs hasta que el logger personalizado esté listo
@@ -96,13 +137,14 @@ async function bootstrap() {
     const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
 
     await app.listen(port).then(() => {
+      process.env.LOG_READY = "true";
       printRoutes(app);
     });
-    console.log(`ℹ️ Instancia de aplicación escuchando por el puerto:port `);
+    logger.info(`ℹInstancia de aplicación escuchando por el puerto:port `);
     // Acceso seguro a las propiedades con type assertion
     const dbOptions = AppDataSource.options as PostgresConnectionOptions;
 
-    logger.log(
+    logger.print(
       `\n` +
         `========================================\n` +
         `🚀 Aplicación ejecutándose\n` +
@@ -117,7 +159,7 @@ async function bootstrap() {
         `========================================`
     );
   } catch (error) {
-    logger.error("❌ Error al iniciar la aplicación", error);
+    logger.error("Error al iniciar la aplicación", error);
     process.exit(1);
   }
 }

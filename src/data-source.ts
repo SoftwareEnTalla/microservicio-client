@@ -1,9 +1,41 @@
+/*
+ * Copyright (c) 2025 SoftwarEnTalla
+ * Licencia: MIT
+ * Contacto: softwarentalla@gmail.com
+ * CEOs: 
+ *       Persy Morell Guerra      Email: pmorellpersi@gmail.com  Phone : +53-5336-4654 Linkedin: https://www.linkedin.com/in/persy-morell-guerra-288943357/
+ *       Dailyn García Domínguez  Email: dailyngd@gmail.com      Phone : +53-5432-0312 Linkedin: https://www.linkedin.com/in/dailyn-dominguez-3150799b/
+ *
+ * CTO: Persy Morell Guerra
+ * COO: Dailyn García Domínguez and Persy Morell Guerra
+ * CFO: Dailyn García Domínguez and Persy Morell Guerra
+ *
+ * Repositories: 
+ *               https://github.com/SoftwareEnTalla 
+ *
+ *               https://github.com/apokaliptolesamale?tab=repositories
+ *
+ *
+ * Social Networks:
+ *
+ *              https://x.com/SoftwarEnTalla
+ *
+ *              https://www.facebook.com/profile.php?id=61572625716568
+ *
+ *              https://www.instagram.com/softwarentalla/
+ *              
+ *
+ *
+ */
+
+
 import { DataSource } from "typeorm";
 import * as dotenv from "dotenv";
 import { Pool, PoolConfig } from "pg";
 import path from "path";
 import "reflect-metadata";
 import { CustomPostgresOptions } from "./interfaces/typeorm.interface";
+import { logger } from '@core/logs/logger';
 
 dotenv.config();
 
@@ -56,7 +88,7 @@ export async function createDatabaseIfNotExists(
     const dbExists = await client.query(checkDbQuery, [dbName]);
 
     if (dbExists.rows.length === 0) {
-      console.log(`🛠 Creando base de datos ${dbName}...`);
+      logger.notify(`Creando base de datos ${dbName}...`,'🛠');
 
         const createDbQuery = `
             CREATE DATABASE "${dbName}"
@@ -71,16 +103,16 @@ export async function createDatabaseIfNotExists(
           // Crear la BD con el owner especificado
           await client.query(createDbQuery);
 
-      console.log(`✅ Base de datos ${dbName} creada con éxito`);
+      logger.success(`Base de datos ${dbName} creada con éxito`);
 
       // Otorgar todos los privilegios al owner
       await client.query(`GRANT ALL PRIVILEGES ON DATABASE "${dbName}" TO "${owner}";`);
     } else {
-      console.log(`ℹ️ La base de datos ${dbName} ya existe`);
+      logger.info(`ℹLa base de datos ${dbName} ya existe`);
     }
   } catch (error) {
-    console.error(
-      `❌ Error al verificar/crear la base de datos ${dbName}:`,
+    logger.error(
+      `Error al verificar/crear la base de datos ${dbName}:`,
       error
     );
     throw error;
@@ -110,9 +142,9 @@ async function checkPostgreSQLExtensions() {
         [ext]
       );
       if (res.rows.length === 0) {
-        console.warn(`⚠️ Extensión '' no disponible`);
+        logger.warn(`⚠️ Extensión '' no disponible`);
       } else {
-        console.log(`✅ Extensión '' instalada`);
+        logger.log(`✅ Extensión '' instalada`);
         await client.query(`CREATE EXTENSION IF NOT EXISTS ""`);
       }
     }
@@ -124,6 +156,7 @@ async function checkPostgreSQLExtensions() {
 
 export async function initializeDatabase() {
   try {
+    logger.info("Data Source Object: ",AppDataSource);
     if (!AppDataSource.isInitialized) {
       // Primero verificar/crear la BD
       await createDatabaseIfNotExists(
@@ -133,11 +166,11 @@ export async function initializeDatabase() {
       // Luego el resto de la inicialización
       await checkPostgreSQLExtensions();
       await AppDataSource.initialize();
-      console.log("📦 DataSource inicializado correctamente");
+      logger.log("📦 DataSource inicializado correctamente");
     }
     return AppDataSource;
   } catch (error) {
-    console.error("❌ Error durante la inicialización:", error);
+    logger.error("❌ Error durante la inicialización:", error);
     throw error;
   }
 }

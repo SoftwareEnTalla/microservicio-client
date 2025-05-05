@@ -1,4 +1,35 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+/*
+ * Copyright (c) 2025 SoftwarEnTalla
+ * Licencia: MIT
+ * Contacto: softwarentalla@gmail.com
+ * CEOs: 
+ *       Persy Morell Guerra      Email: pmorellpersi@gmail.com  Phone : +53-5336-4654 Linkedin: https://www.linkedin.com/in/persy-morell-guerra-288943357/
+ *       Dailyn García Domínguez  Email: dailyngd@gmail.com      Phone : +53-5432-0312 Linkedin: https://www.linkedin.com/in/dailyn-dominguez-3150799b/
+ *
+ * CTO: Persy Morell Guerra
+ * COO: Dailyn García Domínguez and Persy Morell Guerra
+ * CFO: Dailyn García Domínguez and Persy Morell Guerra
+ *
+ * Repositories: 
+ *               https://github.com/SoftwareEnTalla 
+ *
+ *               https://github.com/apokaliptolesamale?tab=repositories
+ *
+ *
+ * Social Networks:
+ *
+ *              https://x.com/SoftwarEnTalla
+ *
+ *              https://www.facebook.com/profile.php?id=61572625716568
+ *
+ *              https://www.instagram.com/softwarentalla/
+ *              
+ *
+ *
+ */
+
+
+import { Injectable, Logger, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { FindManyOptions } from "typeorm";
 import { Client } from "../entities/client.entity";
 import { BaseEntity } from "../entities/base.entity";
@@ -11,14 +42,20 @@ import { PaginationArgs } from "src/common/dto/args/pagination.args";
 //Logger
 import { LogExecutionTime } from "src/common/logger/loggers.functions";
 import { LoggerClient } from "src/common/logger/logger.client";
+import { ModuleRef } from "@nestjs/core";
+import { logger } from '@core/logs/logger';
+
+
 
 @Injectable()
-export class ClientQueryService {
+export class ClientQueryService implements OnModuleInit{
   // Private properties
   readonly #logger = new Logger(ClientQueryService.name);
-  private readonly loggerClient = new LoggerClient();
+  private readonly loggerClient = LoggerClient.getInstance();
 
-  constructor(private readonly repository: ClientQueryRepository) {
+  constructor(private readonly repository: ClientQueryRepository,
+  private moduleRef: ModuleRef
+  ) {
     this.validate();
   }
 
@@ -26,18 +63,40 @@ export class ClientQueryService {
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
+      .registerClient(ClientQueryService.name)
+      .get(ClientQueryService.name),
+  })
+  onModuleInit() {
+    //Se ejecuta en la inicialización del módulo
+  }
+
+
+  @LogExecutionTime({
+    layer: "service",
+    callback: async (logData, client) => {
+      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
+        return await client.send(logData);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -46,12 +105,12 @@ export class ClientQueryService {
       const entityInstance = Object.create(Client.prototype);
       if (!(entityInstance instanceof BaseEntity)) {
         let sms = `El tipo ${Client.name} no extiende de BaseEntity. Asegúrate de que todas las entidades hereden correctamente.`;
-        this.#logger.verbose(sms);
+        logger.info(sms);
         throw new Error(sms);
       }
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -60,18 +119,17 @@ export class ClientQueryService {
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -82,7 +140,7 @@ export class ClientQueryService {
     try {
       const clients = await this.repository.findAll(options);
       // Devolver respuesta
-      this.#logger.verbose("sms");
+      logger.info("sms");
       return {
         ok: true,
         message: "Listado de clients obtenido con éxito",
@@ -96,7 +154,7 @@ export class ClientQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
@@ -106,18 +164,17 @@ export class ClientQueryService {
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -140,28 +197,29 @@ export class ClientQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
 
+
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -198,28 +256,28 @@ export class ClientQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
+ 
 
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -246,28 +304,29 @@ export class ClientQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
+  
+
 
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -275,22 +334,23 @@ export class ClientQueryService {
     return this.repository.count();
   }
 
+ 
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -322,28 +382,30 @@ export class ClientQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
 
+
+
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -354,7 +416,8 @@ export class ClientQueryService {
       });
 
       // Respuesta si el client no existe
-      if (!entity) throw new NotFoundException("Entidad Client no encontrada.");
+      if (!entity)
+        throw new NotFoundException("Entidad Client no encontrada.");
       // Devolver client
       return {
         ok: true,
@@ -363,28 +426,28 @@ export class ClientQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
 
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try {
+      try{
+        logger.info('Información del cliente y datos a enviar:',[logData,client]);
         return await client.send(logData);
-      } catch (error) {
-        console.info(
-          "Ha ocurrido un error al enviar la traza de log: ",
-          logData
-        );
-        console.info("ERROR-LOG: ", error);
+      }
+      catch(error){
+        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
+        logger.info('ERROR-LOG: ', error);
         throw error;
       }
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -407,9 +470,12 @@ export class ClientQueryService {
       };
     } catch (error) {
       // Imprimir error
-      this.#logger.error(error);
+      logger.error(error);
       // Lanzar error
       return Helper.throwCachedError(error);
     }
   }
 }
+
+
+

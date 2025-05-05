@@ -1,3 +1,34 @@
+/*
+ * Copyright (c) 2025 SoftwarEnTalla
+ * Licencia: MIT
+ * Contacto: softwarentalla@gmail.com
+ * CEOs: 
+ *       Persy Morell Guerra      Email: pmorellpersi@gmail.com  Phone : +53-5336-4654 Linkedin: https://www.linkedin.com/in/persy-morell-guerra-288943357/
+ *       Dailyn García Domínguez  Email: dailyngd@gmail.com      Phone : +53-5432-0312 Linkedin: https://www.linkedin.com/in/dailyn-dominguez-3150799b/
+ *
+ * CTO: Persy Morell Guerra
+ * COO: Dailyn García Domínguez and Persy Morell Guerra
+ * CFO: Dailyn García Domínguez and Persy Morell Guerra
+ *
+ * Repositories: 
+ *               https://github.com/SoftwareEnTalla 
+ *
+ *               https://github.com/apokaliptolesamale?tab=repositories
+ *
+ *
+ * Social Networks:
+ *
+ *              https://x.com/SoftwarEnTalla
+ *
+ *              https://www.facebook.com/profile.php?id=61572625716568
+ *
+ *              https://www.instagram.com/softwarentalla/
+ *              
+ *
+ *
+ */
+
+
 import {
   Controller,
   Get,
@@ -8,20 +39,17 @@ import {
 } from "@nestjs/common";
 import { ClientQueryService } from "../services/clientquery.service";
 import { FindManyOptions } from "typeorm";
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiParam,
-} from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from "@nestjs/swagger";
 import { LogExecutionTime } from "src/common/logger/loggers.functions";
 import { ClientResponse, ClientsResponse } from "../types/client.types";
 import { LoggerClient } from "src/common/logger/logger.client";
 import { Client } from "../entities/client.entity";
-import { Order, PaginationArgs } from "src/common/dto/args/pagination.args";
+import { PaginationArgs } from "src/common/dto/args/pagination.args";
+import { OrderBy, valueOfOrderBy } from "src/common/types/common.types";
 import { Helper } from "src/common/helpers/helpers";
-import { ClientDto } from "../dtos/createclient.dto";
+import { ClientDto } from "../dtos/all-dto";
+
+import { logger } from '@core/logs/logger';
 
 @ApiTags("Client Query")
 @Controller("clients/query")
@@ -37,7 +65,7 @@ export class ClientQueryController {
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "size", required: false, type: Number })
   @ApiQuery({ name: "sort", required: false, type: String })
-  @ApiQuery({ name: "order", required: false, type: () => Order })
+  @ApiQuery({ name: "order", required: false, type: String })
   @ApiQuery({ name: "search", required: false, type: String })
   @ApiQuery({ name: "initDate", required: false, type: Date })
   @ApiQuery({ name: "endDate", required: false, type: Date })
@@ -46,19 +74,20 @@ export class ClientQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
   async findAll(
-    @Query("options") options?: FindManyOptions<Client>
+    @Query("options") options?: FindManyOptions<Client>    
   ): Promise<ClientsResponse<Client>> {
     try {
+     
       const clients = await this.service.findAll(options);
-      this.#logger.verbose("Retrieving all client");
+      logger.info("Retrieving all client");
       return clients;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -67,18 +96,13 @@ export class ClientQueryController {
   @ApiOperation({ summary: "Get client by ID" })
   @ApiResponse({ status: 200, type: ClientResponse<Client> })
   @ApiResponse({ status: 404, description: "Client not found" })
-  @ApiParam({
-    name: "id",
-    required: true,
-    description: "ID of the client to retrieve",
-    type: String,
-  })
+  @ApiParam({ name: 'id', required: true, description: 'ID of the client to retrieve', type: String })
   @LogExecutionTime({
     layer: "controller",
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -92,32 +116,22 @@ export class ClientQueryController {
       }
       return client;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
 
   @Get("field/:field") // Asegúrate de que el endpoint esté definido correctamente
   @ApiOperation({ summary: "Find client by specific field" })
-  @ApiQuery({
-    name: "value",
-    required: true,
-    description: "Value to search for",
-    type: String,
-  }) // Documenta el parámetro de consulta
-  @ApiParam({
-    name: "field",
-    required: true,
-    description: "Field to filter client",
-    type: String,
-  }) // Documenta el parámetro de la ruta
+  @ApiQuery({ name: "value", required: true, description: 'Value to search for', type: String }) // Documenta el parámetro de consulta
+  @ApiParam({ name: 'field', required: true, description: 'Field to filter client', type: String }) // Documenta el parámetro de la ruta
   @ApiResponse({ status: 200, type: ClientsResponse })
   @LogExecutionTime({
     layer: "controller",
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -142,10 +156,11 @@ export class ClientQueryController {
       }
       return entities;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
+
 
   @Get("pagination")
   @ApiOperation({ summary: "Find clients with pagination" })
@@ -154,7 +169,7 @@ export class ClientQueryController {
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "size", required: false, type: Number })
   @ApiQuery({ name: "sort", required: false, type: String })
-  @ApiQuery({ name: "order", required: false, type: () => Order })
+  @ApiQuery({ name: "order", required: false, type: String })
   @ApiQuery({ name: "search", required: false, type: String })
   @ApiQuery({ name: "initDate", required: false, type: Date })
   @ApiQuery({ name: "endDate", required: false, type: Date })
@@ -163,7 +178,7 @@ export class ClientQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -172,17 +187,17 @@ export class ClientQueryController {
     @Query("page") page?: number,
     @Query("size") size?: number,
     @Query("sort") sort?: string,
-    @Query("order") order?: Order,
+    @Query("order") order?: string,
     @Query("search") search?: string,
     @Query("initDate") initDate?: Date,
     @Query("endDate") endDate?: Date
   ): Promise<ClientsResponse<Client>> {
     try {
-      const paginationArgs: PaginationArgs = PaginationArgs.createPaginator(
+     const paginationArgs: PaginationArgs = PaginationArgs.createPaginator(
         page || 1,
         size || 25,
         sort || "createdAt", // Asigna valor por defecto
-        order || Order.asc, // Asigna valor por defecto
+        valueOfOrderBy(order || OrderBy.asc), // Asigna valor por defecto
         search || "", // Asigna valor por defecto
         initDate || undefined, // Puede ser undefined si no se proporciona
         endDate || undefined // Puede ser undefined si no se proporciona
@@ -196,7 +211,7 @@ export class ClientQueryController {
       }
       return entities;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -209,7 +224,7 @@ export class ClientQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
@@ -224,7 +239,7 @@ export class ClientQueryController {
   @ApiQuery({ name: "page", required: false, type: Number })
   @ApiQuery({ name: "size", required: false, type: Number })
   @ApiQuery({ name: "sort", required: false, type: String })
-  @ApiQuery({ name: "order", required: false, type: () => Order })
+  @ApiQuery({ name: "order", required: false, type: String })
   @ApiQuery({ name: "search", required: false, type: String })
   @ApiQuery({ name: "initDate", required: false, type: Date })
   @ApiQuery({ name: "endDate", required: false, type: Date })
@@ -233,16 +248,16 @@ export class ClientQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
   async findAndCount(
-    @Query() where: Record<string, any> = {},
+    @Query() where: Record<string, any>={},
     @Query("page") page?: number,
     @Query("size") size?: number,
     @Query("sort") sort?: string,
-    @Query("order") order?: Order,
+    @Query("order") order?: string,
     @Query("search") search?: string,
     @Query("initDate") initDate?: Date,
     @Query("endDate") endDate?: Date
@@ -252,7 +267,7 @@ export class ClientQueryController {
         page || 1,
         size || 25,
         sort || "createdAt", // Asigna valor por defecto
-        order || Order.asc, // Asigna valor por defecto
+        valueOfOrderBy(order || OrderBy.asc), // Asigna valor por defecto
         search || "", // Asigna valor por defecto
         initDate || undefined, // Puede ser undefined si no se proporciona
         endDate || undefined // Puede ser undefined si no se proporciona
@@ -269,7 +284,7 @@ export class ClientQueryController {
       }
       return entities;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -283,12 +298,12 @@ export class ClientQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
   async findOne(
-    @Query() where: Record<string, any> = {}
+    @Query() where: Record<string, any>={}
   ): Promise<ClientResponse<Client>> {
     try {
       const entity = await this.service.findOne({
@@ -300,7 +315,7 @@ export class ClientQueryController {
       }
       return entity;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
@@ -314,12 +329,12 @@ export class ClientQueryController {
     callback: async (logData, client) => {
       return await client.send(logData);
     },
-    client: new LoggerClient()
+    client: LoggerClient.getInstance()
       .registerClient(ClientQueryService.name)
       .get(ClientQueryService.name),
   })
   async findOneOrFail(
-    @Query() where: Record<string, any> = {}
+    @Query() where: Record<string, any>={}
   ): Promise<ClientResponse<Client> | Error> {
     try {
       const entity = await this.service.findOne({
@@ -331,8 +346,10 @@ export class ClientQueryController {
       }
       return entity;
     } catch (error) {
-      this.#logger.error(error);
+      logger.error(error);
       return Helper.throwCachedError(error);
     }
   }
 }
+
+
