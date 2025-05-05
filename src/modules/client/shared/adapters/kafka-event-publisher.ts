@@ -31,9 +31,9 @@
 import { Injectable } from '@nestjs/common';
 import { IEvent, IEventPublisher } from '@nestjs/cqrs';
 import { KafkaService } from '../messaging/kafka.service';
-import * as dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 //logger
-import { logger } from "@core/logs/logger";
+import { logger } from '@core/logs/logger';
 
 @Injectable()
 export class KafkaEventPublisher implements IEventPublisher {
@@ -45,7 +45,7 @@ export class KafkaEventPublisher implements IEventPublisher {
       await this.kafkaService.sendMessage(topic, event);
     } 
     else logger.warn(
-      
+      'Kafka is disabled. Event not published: ${event.constructor.name}'
     );
   }
 
@@ -54,7 +54,7 @@ export class KafkaEventPublisher implements IEventPublisher {
       await Promise.all(events.map(event => this.publish(event)));
     } 
     else logger.warn(
-      
+      'Kafka is disabled. Events not published...'
     );
   }
 
