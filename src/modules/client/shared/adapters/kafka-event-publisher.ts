@@ -45,7 +45,7 @@ export class KafkaEventPublisher implements IEventPublisher {
       await this.kafkaService.sendMessage(topic, event);
     } 
     else logger.warn(
-      
+      `Kafka is disabled. Event not published: ${event.constructor.name}`
     );
   }
 
