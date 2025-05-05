@@ -29,7 +29,7 @@
  */
 
 
-import { ClientModule } from "@modules/client/modules/client.module";
+import { CodetraceModule } from "@modules/codetrace/modules/codetrace.module";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { logger } from '@core/logs/logger';
 
@@ -38,8 +38,8 @@ import { logger } from '@core/logs/logger';
 export function setupSwagger(
   app,
   apiDoc: string = "api-docs",
-  title: string = "Client Service API",
-  description: string = "API completa para gestión de Clients con documentación automática",
+  title: string = "Codetrace Service API",
+  description: string = "API completa para gestión de Codetraces con documentación automática",
   version: string = "1.0"
 ): string {
 try{
@@ -49,7 +49,7 @@ try{
         .setVersion(version)
         // Organiza por módulos/funcionalidades
         //.addTag("Authentication", "Operaciones de autenticación y usuarios")
-        //.addTag("Clients", "Gestión de transacciones y procesamiento de clients")
+        //.addTag("Codetraces", "Gestión de transacciones y procesamiento de codetraces")
         //.addTag("Subscriptions", "Manejo de suscripciones recurrentes")
         //.addTag("Webhooks", "Endpoints para integraciones externas")
         //.addTag("Reports", "Generación de reportes y analytics")
@@ -72,7 +72,7 @@ try{
         .build();
 
       const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
-        include: [ClientModule /*, AuthModule, ReportsModule*/], // Lista todos los módulos
+        include: [CodetraceModule /*, AuthModule, ReportsModule*/], // Lista todos los módulos
         deepScanRoutes: true, // Escanea en profundidad
         ignoreGlobalPrefix: false, // Considera el prefijo global (api/)
         extraModels: [], // Añade esto
@@ -94,7 +94,7 @@ try{
           displayRequestDuration: true,
         },
         customCss: ".swagger-ui .topbar { background-color: #2c3e50; }", // Personalización
-        customSiteTitle: "Client API Docs",
+        customSiteTitle: "Codetrace API Docs",
         customfavIcon: "/favicon.ico",
       });
   }
