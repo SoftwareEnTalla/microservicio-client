@@ -35,7 +35,7 @@ import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, I
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
 import { plainToInstance } from 'class-transformer';
-import { ClientType } from './client-type.entity';
+
 
 @ChildEntity('client')
 @ObjectType()
