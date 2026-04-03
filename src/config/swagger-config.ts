@@ -73,7 +73,7 @@ try{
         .build();
 
       const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
-        include: [ClientModule, ClientTypeModule /*, AuthModule, ReportsModule*/], // Lista todos los módulos
+        include: [ClientModule,         ClientTypeModule,/*, AuthModule, ReportsModule*/], // Lista todos los módulos
         deepScanRoutes: true, // Escanea en profundidad
         ignoreGlobalPrefix: false, // Considera el prefijo global (api/)
         extraModels: [], // Añade esto

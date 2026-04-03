@@ -114,7 +114,7 @@ import LoggerService, { logger } from "@core/logs/logger";
      * Módulos Client de la aplicación
      */
     ClientModule,
-    ClientTypeModule,
+      ClientTypeModule,    
     /**
      * Módulo Logger de la aplicación
      */
@@ -204,7 +204,7 @@ export class ClientAppModule implements OnModuleInit {
       ClientCommandService,
       ClientQueryService,
       ClientTypeCommandService,
-      ClientTypeQueryService,
+      ClientTypeQueryService,    
     ]);
     const loggerService = ServiceRegistry.getInstance().get(
       "LoggerService"
