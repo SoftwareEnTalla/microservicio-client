@@ -29,29 +29,32 @@
  */
 
 
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
+import { tap } from 'rxjs/operators';
+import { EventBus } from '@nestjs/cqrs';
+import { logger } from '@core/logs/logger';
 
 @Injectable()
-export class ClientGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+export class ClienttypeInterceptor implements NestInterceptor {
+  constructor(private readonly eventBus: EventBus) {}
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const ctx = context.switchToHttp();
-    const request = ctx.getRequest<Request>();
+    const request = ctx.getRequest();
     
-    // Ejemplo: Verificación de JWT
-    const token = request.headers.authorization?.split(' ')[1];
-    if (!token) return false;
+    // Logging pre-ejecución
+    logger.log(`Incoming request: ${request.method} ${request.url}`);
 
-    // Lógica de validación de token
-    return this.validateToken(token);
-  }
-
-  private validateToken(token: string): boolean {
-    // Implementar lógica real de validación
-    return token === 'valid-token';
+    const now = Date.now();
+    return next.handle().pipe(
+      tap(() => {
+        // Logging post-ejecución
+        logger.log(`Request completed in ${Date.now() - now}ms`);
+        
+        // Ejemplo: Publicar evento de auditoría
+        // this.eventBus.publish(new RequestCompletedEvent(context));
+      })
+    );
   }
 }

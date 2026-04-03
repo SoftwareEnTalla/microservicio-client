@@ -29,29 +29,29 @@
  */
 
 
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
+import { Module } from "@nestjs/common";
+import { HttpLoggerClient } from "src/common/logger/http-logger.client";
+import { LoggerClient } from "src/common/logger/logger.client";
+import * as dotenv from "dotenv";
+import { getRemoteApiLoggerUrl } from "src/common/logger/loggers.functions";
 
-@Injectable()
-export class ClientGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+dotenv.config();
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-    const ctx = context.switchToHttp();
-    const request = ctx.getRequest<Request>();
-    
-    // Ejemplo: Verificación de JWT
-    const token = request.headers.authorization?.split(' ')[1];
-    if (!token) return false;
+@Module({
+  providers: [
+    {
+      provide: LoggerClient,
+      useFactory: () => {
+        const client = LoggerClient.getInstance();
+        client.registerClient(
+          process.env.KEY_LOG || "Clienttype",
+          new HttpLoggerClient(getRemoteApiLoggerUrl())
+        );
+        return client;
+      },
+    },
+  ],
+  exports: [LoggerClient],
+})
+export class LoggingModule {}
 
-    // Lógica de validación de token
-    return this.validateToken(token);
-  }
-
-  private validateToken(token: string): boolean {
-    // Implementar lógica real de validación
-    return token === 'valid-token';
-  }
-}

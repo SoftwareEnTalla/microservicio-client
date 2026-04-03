@@ -28,30 +28,41 @@
  *
  */
 
-
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { SetMetadata, Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
+
+export const EVENT_SOURCING_CONFIG = 'event_sourcing_config';
+
+export interface EventSourcingConfigOptions {
+  enabled: boolean;
+  kafkaEnabled?: boolean;
+  eventStoreEnabled?: boolean;
+  topics?: string[];
+  publishEvents?: boolean;
+  useProjections?: boolean;
+}
+
+export const EventSourcingConfig = (config: EventSourcingConfigOptions) =>
+  SetMetadata(EVENT_SOURCING_CONFIG, config);
 
 @Injectable()
-export class ClientGuard implements CanActivate {
+export class EventSourcingInterceptor implements NestInterceptor {
   constructor(private reflector: Reflector) {}
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-    const ctx = context.switchToHttp();
-    const request = ctx.getRequest<Request>();
-    
-    // Ejemplo: Verificación de JWT
-    const token = request.headers.authorization?.split(' ')[1];
-    if (!token) return false;
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const eventSourcingConfig = this.reflector.get(
+      EVENT_SOURCING_CONFIG,
+      context.getHandler()
+    ) || { enabled: false };
 
-    // Lógica de validación de token
-    return this.validateToken(token);
-  }
+    const request = context.switchToHttp().getRequest();
+    request.eventSourcingConfig = eventSourcingConfig;
 
-  private validateToken(token: string): boolean {
-    // Implementar lógica real de validación
-    return token === 'valid-token';
+    return next.handle();
   }
+}
+
+export function shouldUseEventSourcing(config: any): boolean {
+  return config && config.enabled === true;
 }

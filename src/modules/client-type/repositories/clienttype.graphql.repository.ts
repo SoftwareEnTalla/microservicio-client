@@ -28,30 +28,23 @@
  *
  */
 
-
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ClienttypeDto } from '../dtos/all-dto';
 
 @Injectable()
-export class ClientGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+export class ClienttypeGraphqlRepository {
+  constructor(
+    @InjectRepository(ClienttypeDto)
+    private readonly repository: Repository<ClienttypeDto>
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-    const ctx = context.switchToHttp();
-    const request = ctx.getRequest<Request>();
-    
-    // Ejemplo: Verificación de JWT
-    const token = request.headers.authorization?.split(' ')[1];
-    if (!token) return false;
-
-    // Lógica de validación de token
-    return this.validateToken(token);
+  async findAll(): Promise<ClienttypeDto[]> {
+    return this.repository.find();
   }
 
-  private validateToken(token: string): boolean {
-    // Implementar lógica real de validación
-    return token === 'valid-token';
+  async findById(id: string): Promise<ClienttypeDto | null> {
+    return this.repository.findOneBy({ id });
   }
 }

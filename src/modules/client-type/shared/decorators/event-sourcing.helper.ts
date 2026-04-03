@@ -28,30 +28,29 @@
  *
  */
 
+import { EventSourcingConfigOptions } from './event-sourcing.decorator';
 
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
-
-@Injectable()
-export class ClientGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
-
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-    const ctx = context.switchToHttp();
-    const request = ctx.getRequest<Request>();
-    
-    // Ejemplo: Verificación de JWT
-    const token = request.headers.authorization?.split(' ')[1];
-    if (!token) return false;
-
-    // Lógica de validación de token
-    return this.validateToken(token);
+export class EventSourcingHelper {
+  static isEventSourcingEnabled(config: EventSourcingConfigOptions): boolean {
+    return config?.enabled === true;
   }
 
-  private validateToken(token: string): boolean {
-    // Implementar lógica real de validación
-    return token === 'valid-token';
+  static shouldPublishEvents(config: EventSourcingConfigOptions): boolean {
+    return this.isEventSourcingEnabled(config) && config.publishEvents !== false;
+  }
+
+  static shouldUseProjections(config: EventSourcingConfigOptions): boolean {
+    return this.isEventSourcingEnabled(config) && config.useProjections !== false;
+  }
+
+  static getDefaultConfig(): EventSourcingConfigOptions {
+    return {
+      enabled: process.env.EVENT_SOURCING_ENABLED === 'true',
+      kafkaEnabled: process.env.KAFKA_ENABLED === 'true',
+      eventStoreEnabled: process.env.EVENT_STORE_ENABLED === 'true',
+      publishEvents: true,
+      useProjections: true,
+      topics: []
+    };
   }
 }

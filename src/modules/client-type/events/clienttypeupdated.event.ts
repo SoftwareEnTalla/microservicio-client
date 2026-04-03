@@ -29,29 +29,35 @@
  */
 
 
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
+import { UpdateClientTypeDto } from '../dtos/all-dto';
+import { ClientType } from '../entities/clienttype.entity';
+import { BaseEvent, PayloadEvent } from './base.event'; 
+import { v4 as uuidv4 } from "uuid";
 
-@Injectable()
-export class ClientGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
-
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-    const ctx = context.switchToHttp();
-    const request = ctx.getRequest<Request>();
-    
-    // Ejemplo: Verificación de JWT
-    const token = request.headers.authorization?.split(' ')[1];
-    if (!token) return false;
-
-    // Lógica de validación de token
-    return this.validateToken(token);
+export class ClientTypeUpdatedEvent extends BaseEvent {
+  constructor(
+    public readonly aggregateId: string,
+    public readonly payload: PayloadEvent<UpdateClientTypeDto|ClientType>
+  ) {
+    super(aggregateId);
   }
 
-  private validateToken(token: string): boolean {
-    // Implementar lógica real de validación
-    return token === 'valid-token';
-  }
+  
+         // Método estático para construcción consistente del evento
+        static create(
+          instanceId: string,
+          instance: UpdateClientTypeDto|ClientType,
+          userId: string,
+          correlationId?: string
+        ): ClientTypeUpdatedEvent {
+          return new ClientTypeUpdatedEvent(instanceId, {
+            instance: instance,
+            metadata: {
+              initiatedBy: userId,
+              correlationId:correlationId || uuidv4(),
+            },
+          });
+        }
+        
+
 }
