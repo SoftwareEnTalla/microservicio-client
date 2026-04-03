@@ -30,90 +30,69 @@
 
 import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { CreateClientDto, UpdateClientDto, DeleteClientDto } from '../dtos/all-dto';
+import { CreateClientTypeDto, UpdateClientTypeDto, DeleteClientTypeDto } from '../dtos/all-dto';
 import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
 import { plainToInstance } from 'class-transformer';
-import { ClientType } from '../client-type/entities/client-type.entity';
 
-@ChildEntity('client')
+
+@ChildEntity('clienttype')
 @ObjectType()
-export class Client extends BaseEntity {
+export class ClientType extends BaseEntity {
   @ApiProperty({
     type: String,
     nullable: false,
-    description: "Nombre de la instancia de Client",
+    description: "Nombre de la instancia de ClientType",
   })
   @IsString()
   @IsNotEmpty()
-  @Field(() => String, { description: "Nombre de la instancia de Client", nullable: false })
-  @Column({ type: 'varchar', length: 100, nullable: false, comment: 'Este es un campo para nombrar la instancia Client' })
+  @Field(() => String, { description: "Nombre de la instancia de ClientType", nullable: false })
+  @Column({ type: 'varchar', length: 100, nullable: false, comment: 'Este es un campo para nombrar la instancia ClientType' })
   private name!: string;
 
   @ApiProperty({
     type: String,
-    description: "Descripción de la instancia de Client",
+    description: "Descripción de la instancia de ClientType",
   })
   @IsString()
   @IsNotEmpty()
-  @Field(() => String, { description: "Descripción de la instancia de Client", nullable: false })
-  @Column({ type: 'varchar', length: 255, nullable: false, default: "Sin descripción", comment: 'Este es un campo para describir la instancia Client' })
+  @Field(() => String, { description: "Descripción de la instancia de ClientType", nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false, default: "Sin descripción", comment: 'Este es un campo para describir la instancia ClientType' })
   private description!: string;
 
   @ApiProperty({
     type: () => String,
     nullable: false,
-    description: 'Código del cliente',
+    description: 'Código del tipo de cliente',
   })
   @IsString()
   @IsNotEmpty()
-  @Field(() => String, { description: 'Código del cliente', nullable: false })
-  @Column({ type: 'varchar', nullable: false, length: 50, unique: true, comment: 'Código del cliente' })
+  @Field(() => String, { description: 'Código del tipo de cliente', nullable: false })
+  @Column({ type: 'varchar', nullable: false, length: 30, unique: true, comment: 'Código del tipo de cliente' })
   code!: string;
 
   @ApiProperty({
     type: () => String,
-    nullable: true,
-    description: 'Correo principal del cliente',
+    nullable: false,
+    description: 'Nombre visible del tipo de cliente',
   })
   @IsString()
-  @IsOptional()
-  @Field(() => String, { description: 'Correo principal del cliente', nullable: true })
-  @Column({ type: 'varchar', nullable: true, length: 120, unique: true, comment: 'Correo principal del cliente' })
-  email?: string = '';
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Nombre visible del tipo de cliente', nullable: false })
+  @Column({ type: 'varchar', nullable: false, length: 120, comment: 'Nombre visible del tipo de cliente' })
+  displayName!: string;
 
   @ApiProperty({
-    type: () => Number,
+    type: () => Object,
     nullable: true,
-    description: 'Límite de crédito',
+    description: 'Configuración adicional del tipo',
   })
-  @IsNumber()
+  @IsObject()
   @IsOptional()
-  @Field(() => Float, { description: 'Límite de crédito', nullable: true })
-  @Column({ type: 'decimal', nullable: true, precision: 12, scale: 2, default: 0, comment: 'Límite de crédito' })
-  creditLimit?: number = 0;
-
-  @ApiProperty({
-    type: () => String,
-    nullable: true,
-    description: 'Tipo de cliente',
-  })
-  @IsUUID()
-  @IsOptional()
-  @Field(() => String, { description: 'Tipo de cliente', nullable: true })
-  @Column({ type: 'uuid', nullable: true, comment: 'Tipo de cliente' })
-  clientTypeId?: string = '';
-
-  @ApiProperty({
-    type: () => ClientType,
-    nullable: true,
-    description: 'Relación con ClientType',
-  })
-  @Field(() => ClientType, { nullable: true })
-  @ManyToOne(() => ClientType, { nullable: true })
-  @JoinColumn({ name: 'clientTypeId' })
-  clientType?: ClientType;
+  @Field(() => String, { description: 'Configuración adicional del tipo', nullable: true })
+  @Column({ type: 'json', nullable: true, comment: 'Configuración adicional del tipo' })
+  metadata?: Record<string, any> = {};
 
   // Relación con BaseEntity (opcional, si aplica)
   // @OneToOne(() => BaseEntity, { cascade: true })
@@ -122,7 +101,7 @@ export class Client extends BaseEntity {
 
   constructor() {
     super();
-    this.type = 'client';
+    this.type = 'clienttype';
   }
 
   // Getters y Setters
@@ -153,11 +132,11 @@ export class Client extends BaseEntity {
   }
 
   // Método estático para convertir DTOs a entidad con sobrecarga
-  static fromDto(dto: CreateClientDto): Client;
-  static fromDto(dto: UpdateClientDto): Client;
-  static fromDto(dto: DeleteClientDto): Client;
-  static fromDto(dto: any): Client {
+  static fromDto(dto: CreateClientTypeDto): ClientType;
+  static fromDto(dto: UpdateClientTypeDto): ClientType;
+  static fromDto(dto: DeleteClientTypeDto): ClientType;
+  static fromDto(dto: any): ClientType {
     // plainToInstance soporta todos los DTOs
-    return plainToInstance(Client, dto);
+    return plainToInstance(ClientType, dto);
   }
 }
