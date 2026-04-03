@@ -47,6 +47,9 @@ import { LoggingModule } from "./modules/client/modules/logger.module";
 import { ModuleRef } from "@nestjs/core";
 import { ServiceRegistry } from "@core/service-registry";
 import LoggerService, { logger } from "@core/logs/logger";
+import { ClientTypeModule } from "./modules/client-type/modules/clienttype.module";
+import { ClientTypeCommandService } from "./modules/client-type/services/clienttypecommand.service";
+import { ClientTypeQueryService } from "./modules/client-type/services/clienttypequery.service";
 
 //import GraphQLJSON from "graphql-type-json";
 
@@ -111,6 +114,7 @@ import LoggerService, { logger } from "@core/logs/logger";
      * Módulos Client de la aplicación
      */
     ClientModule,
+    ClientTypeModule,
     /**
      * Módulo Logger de la aplicación
      */
@@ -199,6 +203,8 @@ export class ClientAppModule implements OnModuleInit {
     ServiceRegistry.getInstance().registryAll([
       ClientCommandService,
       ClientQueryService,
+      ClientTypeCommandService,
+      ClientTypeQueryService,
     ]);
     const loggerService = ServiceRegistry.getInstance().get(
       "LoggerService"
