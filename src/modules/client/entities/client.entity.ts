@@ -36,6 +36,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
 import { plainToInstance } from 'class-transformer';
 import { ClientType } from '../../client-type/entities/client-type.entity';
+import { ClientSegment } from '../../client-segment/entities/client-segment.entity';
+import { ClientLoyaltyTier } from '../../client-loyalty-tier/entities/client-loyalty-tier.entity';
 
 @ChildEntity('client')
 @ObjectType()
@@ -114,6 +116,48 @@ export class Client extends BaseEntity {
   @ManyToOne(() => ClientType, { nullable: true })
   @JoinColumn({ name: 'clientTypeId' })
   clientType?: ClientType;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Segmento de cliente',
+  })
+  @IsUUID()
+  @IsOptional()
+  @Field(() => String, { description: 'Segmento de cliente', nullable: true })
+  @Column({ type: 'uuid', nullable: true, comment: 'Segmento de cliente' })
+  clientSegmentId?: string = '';
+
+  @ApiProperty({
+    type: () => ClientSegment,
+    nullable: true,
+    description: 'Relación con ClientSegment',
+  })
+  @Field(() => ClientSegment, { nullable: true })
+  @ManyToOne(() => ClientSegment, { nullable: true })
+  @JoinColumn({ name: 'clientSegmentId' })
+  clientSegment?: ClientSegment;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Nivel de fidelidad del cliente',
+  })
+  @IsUUID()
+  @IsOptional()
+  @Field(() => String, { description: 'Nivel de fidelidad del cliente', nullable: true })
+  @Column({ type: 'uuid', nullable: true, comment: 'Nivel de fidelidad del cliente' })
+  clientLoyaltyTierId?: string = '';
+
+  @ApiProperty({
+    type: () => ClientLoyaltyTier,
+    nullable: true,
+    description: 'Relación con ClientLoyaltyTier',
+  })
+  @Field(() => ClientLoyaltyTier, { nullable: true })
+  @ManyToOne(() => ClientLoyaltyTier, { nullable: true })
+  @JoinColumn({ name: 'clientLoyaltyTierId' })
+  clientLoyaltyTier?: ClientLoyaltyTier;
 
   // Relación con BaseEntity (opcional, si aplica)
   // @OneToOne(() => BaseEntity, { cascade: true })

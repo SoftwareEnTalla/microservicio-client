@@ -30,6 +30,8 @@
 
 
 import { ClientModule } from "@modules/client/modules/client.module";
+import { ClientLoyaltyTierModule } from "@modules/client-loyalty-tier/modules/clientloyaltytier.module";
+import { ClientSegmentModule } from "@modules/client-segment/modules/clientsegment.module";
 import { ClientTypeModule } from "@modules/client-type/modules/clienttype.module";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { logger } from '@core/logs/logger';
@@ -73,7 +75,9 @@ try{
         .build();
 
       const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
-        include: [ClientModule,         ClientTypeModule,/*, AuthModule, ReportsModule*/], // Lista todos los módulos
+        include: [ClientModule,         ClientLoyaltyTierModule,
+        ClientSegmentModule,
+        ClientTypeModule,/*, AuthModule, ReportsModule*/], // Lista todos los módulos
         deepScanRoutes: true, // Escanea en profundidad
         ignoreGlobalPrefix: false, // Considera el prefijo global (api/)
         extraModels: [], // Añade esto

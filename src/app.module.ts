@@ -47,6 +47,12 @@ import { LoggingModule } from "./modules/client/modules/logger.module";
 import { ModuleRef } from "@nestjs/core";
 import { ServiceRegistry } from "@core/service-registry";
 import LoggerService, { logger } from "@core/logs/logger";
+import { ClientLoyaltyTierModule } from "./modules/client-loyalty-tier/modules/clientloyaltytier.module";
+import { ClientLoyaltyTierCommandService } from "./modules/client-loyalty-tier/services/clientloyaltytiercommand.service";
+import { ClientLoyaltyTierQueryService } from "./modules/client-loyalty-tier/services/clientloyaltytierquery.service";
+import { ClientSegmentModule } from "./modules/client-segment/modules/clientsegment.module";
+import { ClientSegmentCommandService } from "./modules/client-segment/services/clientsegmentcommand.service";
+import { ClientSegmentQueryService } from "./modules/client-segment/services/clientsegmentquery.service";
 import { ClientTypeModule } from "./modules/client-type/modules/clienttype.module";
 import { ClientTypeCommandService } from "./modules/client-type/services/clienttypecommand.service";
 import { ClientTypeQueryService } from "./modules/client-type/services/clienttypequery.service";
@@ -114,7 +120,9 @@ import LoggerService, { logger } from "@core/logs/logger";
      * Módulos Client de la aplicación
      */
     ClientModule,
-      ClientTypeModule,    
+        ClientLoyaltyTierModule,
+    ClientSegmentModule,
+    ClientTypeModule,    
     /**
      * Módulo Logger de la aplicación
      */
@@ -203,6 +211,10 @@ export class ClientAppModule implements OnModuleInit {
     ServiceRegistry.getInstance().registryAll([
       ClientCommandService,
       ClientQueryService,
+      ClientLoyaltyTierCommandService,
+      ClientLoyaltyTierQueryService,
+      ClientSegmentCommandService,
+      ClientSegmentQueryService,
       ClientTypeCommandService,
       ClientTypeQueryService,    
     ]);
