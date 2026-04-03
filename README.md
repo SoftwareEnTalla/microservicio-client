@@ -37,7 +37,6 @@
 | | |____config
 | | |____controllers
 | | |____decorators
-| | | |____decorators
 | | |____dtos
 | | |____entities
 | | |____events
