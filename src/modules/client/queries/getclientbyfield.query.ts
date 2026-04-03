@@ -31,7 +31,7 @@
 
 import { BaseQuery } from './base.query';
 
-export class GetclientByFieldQuery extends BaseQuery {
+export class GetClientByFieldQuery extends BaseQuery {
   constructor(
     public readonly filters: Record<string, any>,
     metadata?: Record<string, any>

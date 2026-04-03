@@ -28,15 +28,29 @@
  *
  */
 
+import { EventSourcingConfigOptions } from './event-sourcing.decorator';
 
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
+export class EventSourcingHelper {
+  static isEventSourcingEnabled(config: EventSourcingConfigOptions): boolean {
+    return config?.enabled === true;
+  }
 
-export class UpdateClientCommand extends BaseCommand {
-  constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
-  ) {
-    super(metadata);
+  static shouldPublishEvents(config: EventSourcingConfigOptions): boolean {
+    return this.isEventSourcingEnabled(config) && config.publishEvents !== false;
+  }
+
+  static shouldUseProjections(config: EventSourcingConfigOptions): boolean {
+    return this.isEventSourcingEnabled(config) && config.useProjections !== false;
+  }
+
+  static getDefaultConfig(): EventSourcingConfigOptions {
+    return {
+      enabled: process.env.EVENT_SOURCING_ENABLED === 'true',
+      kafkaEnabled: process.env.KAFKA_ENABLED === 'true',
+      eventStoreEnabled: process.env.EVENT_STORE_ENABLED === 'true',
+      publishEvents: true,
+      useProjections: true,
+      topics: []
+    };
   }
 }

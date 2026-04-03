@@ -30,26 +30,26 @@
 
 
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
-import { DeleteclientCommand } from "../deleteclient.command";
+import { DeleteClientCommand } from "../deleteclient.command";
 import { KafkaEventPublisher } from "../../shared/adapters/kafka-event-publisher";
 import { KafkaEventSubscriber } from "../../shared/adapters/kafka-event-subscriber";
 import { EventStoreService } from "../../shared/event-store/event-store.service";
-import { clientCreatedEvent } from "../../events/clientcreated.event";
+import { ClientCreatedEvent } from "../../events/clientcreated.event";
 import { v4 as uuidv4 } from "uuid";
 
-@CommandHandler(DeleteclientCommand)
-export class DeleteclientHandler
-  implements ICommandHandler<DeleteclientCommand>
+@CommandHandler(DeleteClientCommand)
+export class DeleteClientHandler
+  implements ICommandHandler<DeleteClientCommand>
 {
   constructor(
     private readonly eventPublisher: KafkaEventPublisher,
     private readonly eventSubscriber: KafkaEventSubscriber,
     private readonly eventStore: EventStoreService
   ) {}
-  async execute(command: DeleteclientCommand) {
+  async execute(command: DeleteClientCommand) {
     command.id = command.id || uuidv4(); // Generar ID si no existe
     // Implementar lógica del comando
-    const event = new clientCreatedEvent(command.id, command.metadata || command.metadata || {
+    const event = new ClientCreatedEvent(command.id, command.metadata || command.metadata || {
         instance: {},
         metadata: {
           initiatedBy: 'system',

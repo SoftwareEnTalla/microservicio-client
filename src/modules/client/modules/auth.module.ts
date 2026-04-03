@@ -29,14 +29,21 @@
  */
 
 
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
+import { Module } from "@nestjs/common";
+import { ClientCommandController } from "../controllers/clientcommand.controller";
+import { ClientLoggingInterceptor } from "../interceptors/client.logging.interceptor";
+import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
+import { ClientAuthGuard } from "../guards/clientauthguard.guard";
 
-export class UpdateClientCommand extends BaseCommand {
-  constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
-  ) {
-    super(metadata);
-  }
-}
+@Module({
+  controllers: [ClientCommandController],
+  providers: [
+    ClientAuthGuard,
+    ClientLoggingInterceptor,
+    CommandBus,
+    EventBus,
+    UnhandledExceptionBus,
+  ],
+  exports: [ClientAuthGuard, CommandBus, EventBus, UnhandledExceptionBus],
+})
+export class AuthClientModule {}

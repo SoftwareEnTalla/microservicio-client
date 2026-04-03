@@ -27,10 +27,9 @@
  *
  *
  */
-
-    import { Injectable } from '@nestjs/common';
-  import { InjectRepository } from '@nestjs/typeorm';
-  import {
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import {
   FindManyOptions,
   FindOptionsWhere,
   In,
@@ -39,19 +38,21 @@
   DeleteResult,
   UpdateResult,
 } from 'typeorm';
- 
-  import { BaseEntity } from '../entities/base.entity';
-  import { Client } from '../entities/client.entity';
-  import { Cacheable } from '../decorators/cache.decorator';
-  import { generateCacheKey } from 'src/utils/functions';
+import { BaseEntity } from '../entities/base.entity';
+import { Client } from '../entities/client.entity';
+import { generateCacheKey } from 'src/utils/functions';
+import { Cacheable } from '../decorators/cache.decorator';
+import {ClientRepository} from './client.repository'
 
-  //Logger
+//Logger
 import { LogExecutionTime } from 'src/common/logger/loggers.functions';
 import { LoggerClient } from 'src/common/logger/logger.client';
 import { logger } from '@core/logs/logger';
 
   @Injectable()
-  export class ClientRepository {
+  export class ClientQueryRepository {
+
+    //Constructor del repositorio de datos: ClientQueryRepository
     constructor(
       @InjectRepository(Client)
       private readonly repository: Repository<Client>
@@ -87,8 +88,7 @@ import { logger } from '@core/logs/logger';
       }
     }
 
-    
-    //Funciones de Query-Repositories
+
     @LogExecutionTime({
     layer: 'repository',
     callback: async (logData, client) => {
@@ -106,9 +106,9 @@ import { logger } from '@core/logs/logger';
     client: LoggerClient.getInstance()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-    })
+  })
     async findAll(options?: FindManyOptions<Client>): Promise<Client[]> {
-      logger.info('Ready to findAll Client on repository:',options);
+      logger.info('Ready to findAll Client on repository:', options);
       return this.repository.find(options);
     }
 
@@ -130,10 +130,10 @@ import { logger } from '@core/logs/logger';
     client: LoggerClient.getInstance()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-    })
+  })
     async findById(id: string): Promise<Client | null> {
       const tmp: FindOptionsWhere<Client> = { id } as FindOptionsWhere<Client>;
-      logger.info('Ready to findById Client on repository:',tmp);
+      logger.info('Ready to findById Client on repository:', tmp);
       return this.repository.findOneBy(tmp);
     }
 
@@ -155,7 +155,7 @@ import { logger } from '@core/logs/logger';
     client: LoggerClient.getInstance()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-    })
+  })
     async findByField(
       field: string,
       value: any,
@@ -167,7 +167,7 @@ import { logger } from '@core/logs/logger';
         skip: (page - 1) * limit,
         take: limit,
       };
-      logger.info('Ready to findByField Client on repository:',options);
+      logger.info('Ready to findByField Client on repository:', options);
       const [entities] = await this.repository.findAndCount(options);
       return entities;
     }
@@ -190,7 +190,7 @@ import { logger } from '@core/logs/logger';
     client: LoggerClient.getInstance()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-    })
+  })
     async findWithPagination(
       options: FindManyOptions<Client>,
       page: number,
@@ -198,9 +198,10 @@ import { logger } from '@core/logs/logger';
     ): Promise<Client[]> {
       const skip = (page - 1) * limit;
       options={ ...options, skip, take: limit };
-      logger.info('Ready to findByField Client on repository:',options);
+      logger.info('Ready to findWithPagination Client on repository:', options);
       return this.repository.find(options);
     }
+
 
     @LogExecutionTime({
     layer: 'repository',
@@ -219,7 +220,7 @@ import { logger } from '@core/logs/logger';
     client: LoggerClient.getInstance()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-    })
+  })
     async count(): Promise<number> {
       logger.info('Ready to count Client on repository...');
       let result= this.repository.count();
@@ -228,7 +229,6 @@ import { logger } from '@core/logs/logger';
     }
 
 
-
     @LogExecutionTime({
     layer: 'repository',
     callback: async (logData, client) => {
@@ -246,10 +246,13 @@ import { logger } from '@core/logs/logger';
     client: LoggerClient.getInstance()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-    })
+  })
     async findAndCount(where?: Record<string, any>): Promise<[Client[], number]> {
-      logger.info('Ready to findByField Client on repository:',where);
-      let result = await this.repository.findAndCount(where);
+      logger.info('Ready to findAndCount Client on repository:',where);
+      let result= this.repository.findAndCount({
+        where: where,
+      });
+      logger.info('Was counted  instances of Client on repository:',result);
       return result;
     }
 
@@ -271,7 +274,7 @@ import { logger } from '@core/logs/logger';
     client: LoggerClient.getInstance()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-    })
+  })
     async findOne(where?: Record<string, any>): Promise<Client | null> {
       const tmp: FindOptionsWhere<Client> = where as FindOptionsWhere<Client>;
       logger.info('Ready to findOneBy Client on repository with conditions:', tmp);
@@ -285,7 +288,7 @@ import { logger } from '@core/logs/logger';
     }
 
 
-    @LogExecutionTime({
+@LogExecutionTime({
     layer: 'repository',
     callback: async (logData, client) => {
       // Puedes usar el cliente proporcionado o ignorarlo y usar otro
@@ -302,7 +305,7 @@ import { logger } from '@core/logs/logger';
     client: LoggerClient.getInstance()
       .registerClient(ClientRepository.name)
       .get(ClientRepository.name),
-    })
+  })
     async findOneOrFail(where?: Record<string, any>): Promise<Client> {
       logger.info('Ready to findOneOrFail Client on repository:',where);
       const entity = await this.repository.findOne({
@@ -313,181 +316,4 @@ import { logger } from '@core/logs/logger';
       }
       return entity;
     }
-
-
-    @LogExecutionTime({
-    layer: 'repository',
-    callback: async (logData, client) => {
-      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try{
-        logger.info('Información del cliente y datos a enviar:',[logData,client]);
-        return await client.send(logData);
-      }
-      catch(error){
-        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
-        logger.info('ERROR-LOG: ', error);
-        throw error;
-      }
-    },
-    client: LoggerClient.getInstance()
-      .registerClient(ClientRepository.name)
-      .get(ClientRepository.name),
-    })
-    //Funciones de Command-Repositories
-    @Cacheable({ key: (args) => generateCacheKey<Client>('createClient',args[0], args[1]), ttl: 60 })
-    async create(entity: Client): Promise<Client> {
-        logger.info('Ready to create Client on repository:', entity);
-        const result = await this.repository.save(entity);
-        logger.info('New instance of Client was created with id:'+ result.id+' on repository:', result);         
-        return result;
-    }
-
-
-    @LogExecutionTime({
-    layer: 'repository',
-    callback: async (logData, client) => {
-      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try{
-        logger.info('Información del cliente y datos a enviar:',[logData,client]);
-        return await client.send(logData);
-      }
-      catch(error){
-        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
-        logger.info('ERROR-LOG: ', error);
-        throw error;
-      }
-    },
-    client: LoggerClient.getInstance()
-      .registerClient(ClientRepository.name)
-      .get(ClientRepository.name),
-    })
-    @Cacheable({ key: (args) => generateCacheKey<Client[]>('createClients',args[0], args[1]), ttl: 60 })
-    async bulkCreate(entities: Client[]): Promise<Client[]> {
-      logger.info('Ready to create Client on repository:', entities);
-      const result = await this.repository.save(entities);
-      logger.info('New '+entities.length+' instances of Client was created on repository:', result);      
-      return result;
-    }
-
-
-
-    @LogExecutionTime({
-    layer: 'repository',
-    callback: async (logData, client) => {
-      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try{
-        logger.info('Información del cliente y datos a enviar:',[logData,client]);
-        return await client.send(logData);
-      }
-      catch(error){
-        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
-        logger.info('ERROR-LOG: ', error);
-        throw error;
-      }
-    },
-    client: LoggerClient.getInstance()
-      .registerClient(ClientRepository.name)
-      .get(ClientRepository.name),
-    })
-    @Cacheable({ key: (args) => generateCacheKey<Client>('updateClient',args[0], args[1]), ttl: 60 })
-    async update(
-        id: string,
-        partialEntity: Partial<Client>
-      ): Promise<Client | null> {
-        logger.info('Ready to update Client on repository:', partialEntity);
-        let result = await this.repository.update(id, partialEntity);
-        logger.info('update Client on repository was successfully :', partialEntity);
-        let instance=await this.repository.findOneBy({ id: id });
-        logger.info('Updated instance of Client with id:  was finded on repository:', instance);
-        return this.repository.findOneBy({ id: id });
-    }
-
-
-    @LogExecutionTime({
-    layer: 'repository',
-    callback: async (logData, client) => {
-      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try{
-        logger.info('Información del cliente y datos a enviar:',[logData,client]);
-        return await client.send(logData);
-      }
-      catch(error){
-        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
-        logger.info('ERROR-LOG: ', error);
-        throw error;
-      }
-    },
-    client: LoggerClient.getInstance()
-      .registerClient(ClientRepository.name)
-      .get(ClientRepository.name),
-    })
-    @Cacheable({ key: (args) => generateCacheKey<Client[]>('updateClients',args[0], args[1]), ttl: 60 })
-    async bulkUpdate(entities: Partial<Client>[]): Promise<Client[]> {
-        const updatedEntities: Client[] = [];
-        logger.info('Ready to update '+entities.length+' entities on repository:', entities);
-        for (const entity of entities) {
-          if (entity.id) {
-            const updatedEntity = await this.update(entity.id, entity);
-            if (updatedEntity) {
-              updatedEntities.push(updatedEntity);
-            }
-          }
-        }
-        logger.info('Already updated '+updatedEntities.length+' entities on repository:', updatedEntities);
-        return updatedEntities;
-    }
-
-
-    @LogExecutionTime({
-    layer: 'repository',
-    callback: async (logData, client) => {
-      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try{
-        logger.info('Información del cliente y datos a enviar:',[logData,client]);
-        return await client.send(logData);
-      }
-      catch(error){
-        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
-        logger.info('ERROR-LOG: ', error);
-        throw error;
-      }
-    },
-    client: LoggerClient.getInstance()
-      .registerClient(ClientRepository.name)
-      .get(ClientRepository.name),
-    })
-    @Cacheable({ key: (args) => generateCacheKey<string>('deleteClient',args[0]), ttl: 60 })
-    async delete(id: string): Promise<DeleteResult> {
-        logger.info('Ready to delete  entity with id:  on repository:', id);
-        const result = await this.repository.delete({ id });
-        logger.info('Entity deleted with id:  on repository:', result);
-        return result;
-    }
-
-    @LogExecutionTime({
-    layer: 'repository',
-    callback: async (logData, client) => {
-      // Puedes usar el cliente proporcionado o ignorarlo y usar otro
-      try{
-        logger.info('Información del cliente y datos a enviar:',[logData,client]);
-        return await client.send(logData);
-      }
-      catch(error){
-        logger.info('Ha ocurrido un error al enviar la traza de log: ', logData);
-        logger.info('ERROR-LOG: ', error);
-        throw error;
-      }
-    },
-    client: LoggerClient.getInstance()
-      .registerClient(ClientRepository.name)
-      .get(ClientRepository.name),
-    })
-    @Cacheable({ key: (args) => generateCacheKey<string[]>('deleteClients',args[0]), ttl: 60 })
-    async bulkDelete(ids: string[]): Promise<DeleteResult> {
-        logger.info('Ready to delete '+ids.length+' entities on repository:', ids);
-        const result = await this.repository.delete(ids);
-        logger.info('Already deleted '+ids.length+' entities on repository:', result);
-        return result;
-    }
-  }
-  
+}

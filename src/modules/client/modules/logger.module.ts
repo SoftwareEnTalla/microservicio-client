@@ -29,14 +29,29 @@
  */
 
 
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
+import { Module } from "@nestjs/common";
+import { HttpLoggerClient } from "src/common/logger/http-logger.client";
+import { LoggerClient } from "src/common/logger/logger.client";
+import * as dotenv from "dotenv";
+import { getRemoteApiLoggerUrl } from "src/common/logger/loggers.functions";
 
-export class UpdateClientCommand extends BaseCommand {
-  constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
-  ) {
-    super(metadata);
-  }
-}
+dotenv.config();
+
+@Module({
+  providers: [
+    {
+      provide: LoggerClient,
+      useFactory: () => {
+        const client = LoggerClient.getInstance();
+        client.registerClient(
+          process.env.KEY_LOG || "Client",
+          new HttpLoggerClient(getRemoteApiLoggerUrl())
+        );
+        return client;
+      },
+    },
+  ],
+  exports: [LoggerClient],
+})
+export class LoggingModule {}
+

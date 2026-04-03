@@ -44,11 +44,11 @@ import {
 
 
 @InputType()
-export class BaseclientDto {
+export class BaseClientDto {
   @ApiProperty({
     type: () => String,
-    description: 'Nombre de instancia Createclient',
-    example: 'Nombre de instancia Createclient',
+    description: 'Nombre de instancia CreateClient',
+    example: 'Nombre de instancia CreateClient',
     nullable: false,
   })
   @IsString()
@@ -56,12 +56,12 @@ export class BaseclientDto {
   @Field(() => String, { nullable: false })
   name: string = '';
 
-  // Propiedades predeterminadas de la clase CreateclientDto según especificación del sistema
+  // Propiedades predeterminadas de la clase CreateClientDto según especificación del sistema
 
   @ApiProperty({
     type: () => Date,
-    description: 'Fecha de creación de la instancia (Createclient).',
-    example: 'Fecha de creación de la instancia (Createclient).',
+    description: 'Fecha de creación de la instancia (CreateClient).',
+    example: 'Fecha de creación de la instancia (CreateClient).',
     nullable: false,
   })
   @IsDate()
@@ -71,8 +71,8 @@ export class BaseclientDto {
 
   @ApiProperty({
     type: () => Date,
-    description: 'Fecha de actualización de la instancia (Createclient).',
-    example: 'Fecha de actualización de la instancia (Createclient).',
+    description: 'Fecha de actualización de la instancia (CreateClient).',
+    example: 'Fecha de actualización de la instancia (CreateClient).',
     nullable: false,
   })
   @IsDate()
@@ -83,9 +83,9 @@ export class BaseclientDto {
   @ApiProperty({
     type: () => String,
     description:
-      'Usuario que realiza la creación de la instancia (Createclient).',
+      'Usuario que realiza la creación de la instancia (CreateClient).',
     example:
-      'Usuario que realiza la creación de la instancia (Createclient).',
+      'Usuario que realiza la creación de la instancia (CreateClient).',
     nullable: true,
   })
   @IsString()
@@ -95,8 +95,8 @@ export class BaseclientDto {
 
   @ApiProperty({
     type: () => Boolean,
-    description: 'Estado de activación de la instancia (Createclient).',
-    example: 'Estado de activación de la instancia (Createclient).',
+    description: 'Estado de activación de la instancia (CreateClient).',
+    example: 'Estado de activación de la instancia (CreateClient).',
     nullable: false,
   })
   @IsBoolean()
@@ -105,7 +105,7 @@ export class BaseclientDto {
   isActive: boolean = false; // Por defecto, el objeto no está activo
 
   // Constructor
-  constructor(partial: Partial<BaseclientDto>) {
+  constructor(partial: Partial<BaseClientDto>) {
     Object.assign(this, partial);
   }
 }
@@ -114,8 +114,8 @@ export class BaseclientDto {
 
 
 @InputType()
-export class clientDto extends BaseclientDto {
-  // Propiedades específicas de la clase clientDto en cuestión
+export class ClientDto extends BaseClientDto {
+  // Propiedades específicas de la clase ClientDto en cuestión
 
   @ApiProperty({
     type: () => String,
@@ -128,14 +128,14 @@ export class clientDto extends BaseclientDto {
   id?: string;
 
   // Constructor
-  constructor(partial: Partial<clientDto>) {
+  constructor(partial: Partial<ClientDto>) {
     super(partial);
     Object.assign(this, partial);
   }
 
   // Método estático para construir la instancia
-  static build(data: Partial<clientDto>): clientDto {
-    const instance = new clientDto(data);
+  static build(data: Partial<ClientDto>): ClientDto {
+    const instance = new ClientDto(data);
     instance.creationDate = new Date(); // Actualiza la fecha de creación al momento de la creación
     instance.modificationDate = new Date(); // Actualiza la fecha de modificación al momento de la creación
     return instance;
@@ -146,7 +146,7 @@ export class clientDto extends BaseclientDto {
 
 
 @InputType()
-export class clientValueInput {
+export class ClientValueInput {
   @ApiProperty({
     type: () => String,
     nullable: false,
@@ -156,11 +156,11 @@ export class clientValueInput {
   fieldName: string = 'id';
 
   @ApiProperty({
-    type: () => clientDto,
+    type: () => ClientDto,
     nullable: false,
     description: 'Valor del filtro',
   })
-  @Field(() => clientDto, { nullable: false })
+  @Field(() => ClientDto, { nullable: false })
   fieldValue: any; // Permite cualquier tipo
 } 
 
@@ -168,8 +168,8 @@ export class clientValueInput {
 
 
 @ObjectType()
-export class clientOutPutDto extends BaseclientDto {
-  // Propiedades específicas de la clase clientOutPutDto en cuestión
+export class ClientOutPutDto extends BaseClientDto {
+  // Propiedades específicas de la clase ClientOutPutDto en cuestión
 
   @ApiProperty({
     type: () => String,
@@ -182,14 +182,14 @@ export class clientOutPutDto extends BaseclientDto {
   id?: string;
 
   // Constructor
-  constructor(partial: Partial<clientOutPutDto>) {
+  constructor(partial: Partial<ClientOutPutDto>) {
     super(partial);
     Object.assign(this, partial);
   }
 
   // Método estático para construir la instancia
-  static build(data: Partial<clientOutPutDto>): clientOutPutDto {
-    const instance = new clientOutPutDto(data);
+  static build(data: Partial<ClientOutPutDto>): ClientOutPutDto {
+    const instance = new ClientOutPutDto(data);
     instance.creationDate = new Date(); // Actualiza la fecha de creación al momento de la creación
     instance.modificationDate = new Date(); // Actualiza la fecha de modificación al momento de la creación
     return instance;
@@ -199,14 +199,14 @@ export class clientOutPutDto extends BaseclientDto {
 
 
 @InputType()
-export class CreateclientDto extends BaseclientDto {
-  // Propiedades específicas de la clase CreateclientDto en cuestión
+export class CreateClientDto extends BaseClientDto {
+  // Propiedades específicas de la clase CreateClientDto en cuestión
 
   @ApiProperty({
     type: () => String,
     description: 'Identificador de instancia a crear',
     example:
-      'Se proporciona un identificador de Createclient a crear \(opcional\) ',
+      'Se proporciona un identificador de CreateClient a crear \(opcional\) ',
   })
   @IsString()
   @IsOptional()
@@ -214,14 +214,14 @@ export class CreateclientDto extends BaseclientDto {
   id?: string;
 
   // Constructor
-  constructor(partial: Partial<CreateclientDto>) {
+  constructor(partial: Partial<CreateClientDto>) {
     super(partial);
     Object.assign(this, partial);
   }
 
   // Método estático para construir la instancia
-  static build(data: Partial<CreateclientDto>): CreateclientDto {
-    const instance = new CreateclientDto(data);
+  static build(data: Partial<CreateClientDto>): CreateClientDto {
+    const instance = new CreateClientDto(data);
     instance.creationDate = new Date(); // Actualiza la fecha de creación al momento de la creación
     instance.modificationDate = new Date(); // Actualiza la fecha de modificación al momento de la creación
     return instance;
@@ -231,7 +231,7 @@ export class CreateclientDto extends BaseclientDto {
 
 
 @InputType()
-export class CreateOrUpdateclientDto {
+export class CreateOrUpdateClientDto {
   @ApiProperty({
     type: () => String,
     description: 'Identificador',
@@ -243,27 +243,27 @@ export class CreateOrUpdateclientDto {
   id?: string;
 
   @ApiProperty({
-    type: () => CreateclientDto,
-    description: 'Instancia Createclient o Updateclient',
+    type: () => CreateClientDto,
+    description: 'Instancia CreateClient o UpdateClient',
     nullable: true,
   })
   @IsOptional()
   @IsObject()
   @ValidateNested()
-  @Field(() => CreateclientDto, { nullable: true })
-  input?: CreateclientDto | UpdateclientDto; // Asegúrate de que esto esté correcto
+  @Field(() => CreateClientDto, { nullable: true })
+  input?: CreateClientDto | UpdateClientDto; // Asegúrate de que esto esté correcto
 }
 
 
 
 @InputType()
-export class DeleteclientDto {
-  // Propiedades específicas de la clase DeleteclientDto en cuestión
+export class DeleteClientDto {
+  // Propiedades específicas de la clase DeleteClientDto en cuestión
 
   @ApiProperty({
     type: () => String,
     description: 'Identificador de instancia a eliminar',
-    example: 'Se proporciona un identificador de Deleteclient a eliminar',
+    example: 'Se proporciona un identificador de DeleteClient a eliminar',
     default: '',
   })
   @IsString()
@@ -275,7 +275,7 @@ export class DeleteclientDto {
     type: () => String,
     description: 'Lista de identificadores de instancias a eliminar',
     example:
-      'Se proporciona una lista de identificadores de Deleteclient a eliminar',
+      'Se proporciona una lista de identificadores de DeleteClient a eliminar',
     default: [],
   })
   @IsString()
@@ -287,13 +287,13 @@ export class DeleteclientDto {
 
 
 @InputType()
-export class UpdateclientDto extends BaseclientDto {
-  // Propiedades específicas de la clase UpdateclientDto en cuestión
+export class UpdateClientDto extends BaseClientDto {
+  // Propiedades específicas de la clase UpdateClientDto en cuestión
 
   @ApiProperty({
     type: () => String,
     description: 'Identificador de instancia a actualizar',
-    example: 'Se proporciona un identificador de Updateclient a actualizar',
+    example: 'Se proporciona un identificador de UpdateClient a actualizar',
   })
   @IsString()
   @IsNotEmpty()
@@ -301,14 +301,14 @@ export class UpdateclientDto extends BaseclientDto {
   id!: string;
 
   // Constructor
-  constructor(partial: Partial<UpdateclientDto>) {
+  constructor(partial: Partial<UpdateClientDto>) {
     super(partial);
     Object.assign(this, partial);
   }
 
   // Método estático para construir la instancia
-  static build(data: Partial<UpdateclientDto>): UpdateclientDto {
-    const instance = new UpdateclientDto(data);
+  static build(data: Partial<UpdateClientDto>): UpdateClientDto {
+    const instance = new UpdateClientDto(data);
     instance.creationDate = new Date(); // Actualiza la fecha de creación al momento de la creación
     instance.modificationDate = new Date(); // Actualiza la fecha de modificación al momento de la creación
     return instance;

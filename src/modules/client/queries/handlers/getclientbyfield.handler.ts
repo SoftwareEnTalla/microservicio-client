@@ -30,11 +30,11 @@
 
 
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetclientByFieldQuery } from '../getclientbyfield.query';
+import { GetClientByFieldQuery } from '../getclientbyfield.query';
 
-@QueryHandler(GetclientByFieldQuery)
-export class GetclientByFieldHandler implements IQueryHandler<GetclientByFieldQuery> {
-  async execute(query: GetclientByFieldQuery) {
+@QueryHandler(GetClientByFieldQuery)
+export class GetClientByFieldHandler implements IQueryHandler<GetClientByFieldQuery> {
+  async execute(query: GetClientByFieldQuery) {
     // Implementar lógica de la query
   }
 }

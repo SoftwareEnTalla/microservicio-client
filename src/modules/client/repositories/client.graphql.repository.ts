@@ -28,15 +28,23 @@
  *
  */
 
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ClientDto } from '../dtos/all-dto';
 
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
-
-export class UpdateClientCommand extends BaseCommand {
+@Injectable()
+export class ClientGraphqlRepository {
   constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
-  ) {
-    super(metadata);
+    @InjectRepository(ClientDto)
+    private readonly repository: Repository<ClientDto>
+  ) {}
+
+  async findAll(): Promise<ClientDto[]> {
+    return this.repository.find();
+  }
+
+  async findById(id: string): Promise<ClientDto | null> {
+    return this.repository.findOneBy({ id });
   }
 }

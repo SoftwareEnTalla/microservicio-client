@@ -32,7 +32,7 @@
 import { PayloadEvent } from '../events/base.event';
 import { BaseCommand } from './base.command';
 
-export class DeleteclientCommand extends BaseCommand {
+export class DeleteClientCommand extends BaseCommand {
   constructor(
     public readonly payload: any,
     metadata?: PayloadEvent

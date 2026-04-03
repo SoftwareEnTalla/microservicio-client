@@ -28,15 +28,28 @@
  *
  */
 
+import { Query, Resolver, Args } from '@nestjs/graphql'; 
+import { ClientDto } from '../dtos/all-dto';
+import { ClientGraphqlService } from '../services/client.graphql.service';
+import { NotFoundException } from '@nestjs/common';
 
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
+@Resolver(() => ClientDto)
+export class ClientGraphqlQuery {
+  constructor(private readonly service: ClientGraphqlService) {}
 
-export class UpdateClientCommand extends BaseCommand {
-  constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
-  ) {
-    super(metadata);
+  @Query(() => [ClientDto], { name: 'findAllClients' })
+  async findAll(): Promise<ClientDto[]> {
+    return this.service.findAll();
+  }
+
+  @Query(() => ClientDto, { name: 'findClientById' })
+  async findById(
+    @Args('id', { type: () => String }) id: string
+  ): Promise<ClientDto> {
+    const result = await this.service.findById(id);
+    if (!result) {
+      throw new NotFoundException("Client con id " + id + " no encontrado");
+    }
+    return result;
   }
 }

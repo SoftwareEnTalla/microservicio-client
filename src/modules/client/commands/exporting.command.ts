@@ -27,16 +27,7 @@
  *
  *
  */
-
-
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
-
-export class UpdateClientCommand extends BaseCommand {
-  constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
-  ) {
-    super(metadata);
-  }
-}
+export * from "./base.command";
+export * from "./createclient.command";
+export * from "./updateclient.command";
+export * from "./deleteclient.command";

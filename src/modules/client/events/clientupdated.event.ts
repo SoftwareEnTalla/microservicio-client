@@ -29,15 +29,15 @@
  */
 
 
-import { UpdateclientDto } from '../dtos/all-dto';
-import { client } from '../entities/client.entity';
+import { UpdateClientDto } from '../dtos/all-dto';
+import { Client } from '../entities/client.entity';
 import { BaseEvent, PayloadEvent } from './base.event'; 
 import { v4 as uuidv4 } from "uuid";
 
-export class clientUpdatedEvent extends BaseEvent {
+export class ClientUpdatedEvent extends BaseEvent {
   constructor(
     public readonly aggregateId: string,
-    public readonly payload: PayloadEvent<UpdateclientDto|client>
+    public readonly payload: PayloadEvent<UpdateClientDto|Client>
   ) {
     super(aggregateId);
   }
@@ -46,11 +46,11 @@ export class clientUpdatedEvent extends BaseEvent {
          // Método estático para construcción consistente del evento
         static create(
           instanceId: string,
-          instance: UpdateclientDto|client,
+          instance: UpdateClientDto|Client,
           userId: string,
           correlationId?: string
-        ): clientUpdatedEvent {
-          return new clientUpdatedEvent(instanceId, {
+        ): ClientUpdatedEvent {
+          return new ClientUpdatedEvent(instanceId, {
             instance: instance,
             metadata: {
               initiatedBy: userId,

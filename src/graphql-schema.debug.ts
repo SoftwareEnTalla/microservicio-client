@@ -28,15 +28,27 @@
  *
  */
 
+// src/graphql-schema.debug.ts
+import { printSchema } from "graphql";
+import { writeFileSync } from "fs";
+import { NestFactory } from "@nestjs/core";
+import { GraphQLSchemaHost } from "@nestjs/graphql";
+import { ClientAppModule } from "./app.module";
+import { logger } from '@core/logs/logger';
 
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
+async function debugSchema() {
+  const app = await NestFactory.create(ClientAppModule);
+  await app.init();
 
-export class UpdateClientCommand extends BaseCommand {
-  constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
-  ) {
-    super(metadata);
-  }
+  const { schema } = app.get(GraphQLSchemaHost);
+  writeFileSync("schema.gql", printSchema(schema));
+
+  await app.close();
 }
+
+debugSchema().catch((err) => {
+  logger.error("Failed to generate schema:", err);
+  process.exit(1);
+});
+
+

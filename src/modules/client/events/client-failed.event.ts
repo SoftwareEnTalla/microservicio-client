@@ -29,14 +29,13 @@
  */
 
 
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
+import { BaseEvent,BaseFailedEvent } from './base.event';
 
-export class UpdateClientCommand extends BaseCommand {
+export class SagaClientFailedEvent extends BaseFailedEvent {
   constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
+    public readonly error: Error,
+    public readonly event: any
   ) {
-    super(metadata);
+    super(error, event);
   }
 }

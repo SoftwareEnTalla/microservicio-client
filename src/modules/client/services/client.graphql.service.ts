@@ -28,15 +28,18 @@
  *
  */
 
+import { Injectable } from '@nestjs/common';
+import { ClientGraphqlRepository } from '../repositories/client.graphql.repository';
 
-import { PayloadEvent } from '../events/base.event';
-import { BaseCommand } from './base.command';
+@Injectable()
+export class ClientGraphqlService {
+  constructor(private readonly repository: ClientGraphqlRepository) {}
 
-export class UpdateClientCommand extends BaseCommand {
-  constructor(
-    public readonly payload: any,
-    metadata?: PayloadEvent
-  ) {
-    super(metadata);
+  async findAll() {
+    return this.repository.findAll();
+  }
+
+  async findById(id: string) {
+    return this.repository.findById(id);
   }
 }
