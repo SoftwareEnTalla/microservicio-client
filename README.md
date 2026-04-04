@@ -1,6 +1,6 @@
 # CLIENT Microservice
 
-**Creation Date**: 2026-04-02
+**Creation Date**: 2026-04-04
 
 **Author**: Ing. Persy Morell Guerra e Ing. Dailyn García Dominguez (SoftwarEnTalla CEO)
 
