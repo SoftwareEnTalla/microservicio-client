@@ -30,7 +30,7 @@
 
 
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import { IEventBus } from '@nestjs/cqrs';
+import { EventBus } from '@nestjs/cqrs';
 import { KafkaService } from '../messaging/kafka.service';
   import { EVENT_REGISTRY, EVENT_TOPICS } from '../../events/event-registry';
 
@@ -40,7 +40,7 @@ export class KafkaEventSubscriber implements OnModuleInit {
 
   constructor(
     private readonly kafkaService: KafkaService,
-      private readonly eventBus: IEventBus
+    private readonly eventBus: EventBus
   ) {}
 
   async onModuleInit() {
