@@ -28,16 +28,21 @@
  *
  */
 
+import { KafkaEventPublisher } from './kafka-event-publisher';
+import { ClientCreatedEvent } from '../../events/clientcreated.event';
 
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetClientByIdQuery } from '../getclientbyid.query';
-import { ClientQueryService } from '../../services/clientquery.service';
+describe('KafkaEventPublisher', () => {
+  it('resuelve el tópico a partir del nombre del evento', async () => {
+    process.env.KAFKA_ENABLED = 'true';
+    const sendMessage = jest.fn().mockResolvedValue(undefined);
+    const publisher = new KafkaEventPublisher({ sendMessage } as any);
+    const event = new ClientCreatedEvent('agg-1', {
+      instance: { id: 'agg-1' },
+      metadata: { initiatedBy: 'test', correlationId: 'agg-1' },
+    });
 
-@QueryHandler(GetClientByIdQuery)
-export class GetClientByIdHandler implements IQueryHandler<GetClientByIdQuery> {
-  constructor(private readonly queryService: ClientQueryService) {}
+    await publisher.publish(event);
 
-  async execute(query: GetClientByIdQuery) {
-    return this.queryService.findOne({ where: { id: query.filters?.id } });
-  }
-}
+    expect(sendMessage).toHaveBeenCalledWith('client-created', event);
+  });
+});

@@ -42,8 +42,17 @@ import { ClientAuthGuard } from "../guards/clientauthguard.guard";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Client } from "../entities/client.entity";
 import { BaseEntity } from "../entities/base.entity";
-import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { CacheModule } from "@nestjs/cache-manager";
+import { CqrsModule } from "@nestjs/cqrs";
+import { KafkaModule } from "./kafka.module";
+import { CreateClientHandler } from "../commands/handlers/createclient.handler";
+import { UpdateClientHandler } from "../commands/handlers/updateclient.handler";
+import { DeleteClientHandler } from "../commands/handlers/deleteclient.handler";
+import { GetClientByIdHandler } from "../queries/handlers/getclientbyid.handler";
+import { GetClientByFieldHandler } from "../queries/handlers/getclientbyfield.handler";
+import { GetAllClientHandler } from "../queries/handlers/getallclient.handler";
+import { ClientCrudSaga } from "../sagas/client-crud.saga";
+import { EVENT_TOPICS } from "../events/event-registry";
 
 //Interceptors
 import { ClientInterceptor } from "../interceptors/client.interceptor";
@@ -51,11 +60,11 @@ import { ClientLoggingInterceptor } from "../interceptors/client.logging.interce
 
 //Event-Sourcing dependencies
 import { EventStoreService } from "../shared/event-store/event-store.service";
-import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
-import { KafkaService } from "../shared/messaging/kafka.service";
 
 @Module({
   imports: [
+    CqrsModule,
+    KafkaModule,
     TypeOrmModule.forFeature([BaseEntity, Client]), // Incluir BaseEntity para herencia
     CacheModule.register(), // Importa el módulo de caché
   ],
@@ -63,7 +72,6 @@ import { KafkaService } from "../shared/messaging/kafka.service";
   providers: [
     //Services
     EventStoreService,
-    KafkaService,
     ClientQueryService,
     ClientCommandService,
     //Repositories
@@ -77,29 +85,32 @@ import { KafkaService } from "../shared/messaging/kafka.service";
     //Interceptors
     ClientInterceptor,
     ClientLoggingInterceptor,
-    //Publishers
-    KafkaEventPublisher,
+    //CQRS Handlers
+    CreateClientHandler,
+    UpdateClientHandler,
+    DeleteClientHandler,
+    GetClientByIdHandler,
+    GetClientByFieldHandler,
+    GetAllClientHandler,
+    ClientCrudSaga,
     //Configurations
     {
       provide: 'EVENT_SOURCING_CONFIG',
       useFactory: () => ({
-        enabled: process.env.EVENT_SOURCING_ENABLED === 'true',
-        kafkaEnabled: process.env.KAFKA_ENABLED === 'true',
+        enabled: process.env.EVENT_SOURCING_ENABLED !== 'false',
+        kafkaEnabled: process.env.KAFKA_ENABLED !== 'false',
         eventStoreEnabled: process.env.EVENT_STORE_ENABLED === 'true',
         publishEvents: true,
         useProjections: true,
-        topics: ['client-events']
+        topics: EVENT_TOPICS
       })
     },
-    //Others dependencies
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
   ],
   exports: [
+    CqrsModule,
+    KafkaModule,
     //Services
     EventStoreService,
-    KafkaService,
     ClientQueryService,
     ClientCommandService,
     //Repositories
@@ -113,12 +124,6 @@ import { KafkaService } from "../shared/messaging/kafka.service";
     //Interceptors
     ClientInterceptor,
     ClientLoggingInterceptor,
-    //Publishers
-    KafkaEventPublisher,
-    //Others dependencies
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
   ],
 })
 export class ClientModule {}

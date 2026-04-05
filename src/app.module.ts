@@ -35,7 +35,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule } from "@nestjs/config";
 import { ClientCommandController } from "./modules/client/controllers/clientcommand.controller";
 import { ClientModule } from "./modules/client/modules/client.module";
-import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
+import { CqrsModule } from "@nestjs/cqrs";
 import { AppDataSource, initializeDatabase } from "./data-source";
 import { ClientQueryController } from "./modules/client/controllers/clientquery.controller";
 import { GraphQLModule } from "@nestjs/graphql";
@@ -119,6 +119,7 @@ import LoggerService, { logger } from "@core/logs/logger";
     /**
      * Módulos Client de la aplicación
      */
+    CqrsModule,
     ClientModule,
         ClientLoyaltyTierModule,
     ClientSegmentModule,
@@ -163,10 +164,6 @@ import LoggerService, { logger } from "@core/logs/logger";
    * Registro de servicios globales y configuración de inyección de dependencias.
    */
   providers: [
-    // Sistema CQRS
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
     // Configuración de Base de datos
     ...(process.env.INCLUDING_DATA_BASE_SYSTEM === 'true'
       ? [

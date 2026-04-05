@@ -30,5 +30,7 @@
 export * from "./clientdeleted.event"; 
 export * from "./clientcreated.event";
 export * from "./clientupdated.event";
+export * from "./clienthighcreditlimitdetected.event";
+export * from "./event-registry";
 export * from "./base.event";
 export * from "./client-failed.event";

@@ -31,10 +31,13 @@
 
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { GetClientByFieldQuery } from '../getclientbyfield.query';
+import { ClientQueryService } from '../../services/clientquery.service';
 
 @QueryHandler(GetClientByFieldQuery)
 export class GetClientByFieldHandler implements IQueryHandler<GetClientByFieldQuery> {
+  constructor(private readonly queryService: ClientQueryService) {}
+
   async execute(query: GetClientByFieldQuery) {
-    // Implementar lógica de la query
+    return this.queryService.findByField(query.filters?.field, query.filters?.value, query.filters?.page ?? 1, query.filters?.limit ?? 10);
   }
 }

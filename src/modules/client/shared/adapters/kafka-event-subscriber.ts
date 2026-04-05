@@ -32,6 +32,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { IEventBus } from '@nestjs/cqrs';
 import { KafkaService } from '../messaging/kafka.service';
+  import { EVENT_REGISTRY, EVENT_TOPICS } from '../../events/event-registry';
 
 @Injectable()
 export class KafkaEventSubscriber implements OnModuleInit {
@@ -39,54 +40,74 @@ export class KafkaEventSubscriber implements OnModuleInit {
 
   constructor(
     private readonly kafkaService: KafkaService,
-    private readonly eventBus: IEventBus,
-    private readonly eventNames: string[] = []
+      private readonly eventBus: IEventBus
   ) {}
 
   async onModuleInit() {
+      if (process.env.KAFKA_ENABLED !== 'true') {
+        this.logger.warn('Kafka está deshabilitado. No se inicializan suscriptores.');
+        return;
+      }
     await this.kafkaService.connect();
     await this.setupSubscriptions();
   }
 
   private async setupSubscriptions() {
-    // Suscribe los eventos de otros microservicios
-    await this.kafkaService.subscribe(this.eventNames, (message) => {
-      this.routeExternalEvent(message);
+      if (EVENT_TOPICS.length === 0) {
+        this.logger.warn('No hay tópicos registrados para suscripción Kafka.');
+        return;
+      }
+      await this.kafkaService.subscribe(EVENT_TOPICS, (message, metadata) => {
+        this.routeExternalEvent(message, metadata);
     });
   }
 
-  private routeExternalEvent(message: any) {
+    private routeExternalEvent(message: any, metadata: any) {
     try {
-      const eventType = message._headers['event-type'];
-      if (!eventType) {
-        throw new Error('Missing event-type header');
-      }
-
-      // Ejemplo: Convierte 'payment-processed' a 'PaymentProcessedEvent'
-      const eventClass = this.resolveEventClass(eventType);
+        const eventType = this.extractHeaderValue(metadata?.headers?.['event-type']);
+        const topic = metadata?.topic;
+        const eventClass = this.resolveEventClass(topic, eventType);
       
       if (!eventClass) {
-        this.logger.warn(`No handler for event type: ${eventType}`);
+          this.logger.warn();
         return;
       }
 
-      const event = new eventClass(message);
+        const aggregateId = String(message?.aggregateId ?? message?.id ?? message?.payload?.metadata?.correlationId ?? 'unknown-aggregate');
+        const payload = message?.payload ?? message;
+        const event = new eventClass(aggregateId, payload);
       this.eventBus.publish(event);
     } catch (error:any) {
       this.logger.error(`Error processing external event: ${error.message}`, error.stack);
     }
   }
 
-  private resolveEventClass(eventType: string): new (...args: any[]) => any {
-    // Implementa tu lógica para mapear nombres de evento a clases
-    // Puedes usar un registro estático o convenciones de nombres
-    const eventMap = {
-      //'payment-processed': PaymentProcessedEvent,
-      //'inventory-updated': InventoryUpdatedEvent,
-      // ...otros eventos
-    };
+    private resolveEventClass(topic?: string, eventType?: string): new (...args: any[]) => any {
+      const normalizedTopic = topic || this.normalizeEventTypeToTopic(eventType);
+      return normalizedTopic ? EVENT_REGISTRY[normalizedTopic] : undefined;
+    }
 
-    return eventMap[eventType];
+    private extractHeaderValue(header: any): string | undefined {
+      if (!header) {
+        return undefined;
+      }
+      if (typeof header === 'string') {
+        return header;
+      }
+      if (Buffer.isBuffer(header)) {
+        return header.toString('utf-8');
+      }
+      return String(header);
+    }
+
+    private normalizeEventTypeToTopic(eventType?: string): string | undefined {
+      if (!eventType) {
+        return undefined;
+      }
+      return eventType
+        .replace(/Event$/, '')
+        .replace(/([a-z])([A-Z])/g, '-')
+        .toLowerCase();
   }
 }
 

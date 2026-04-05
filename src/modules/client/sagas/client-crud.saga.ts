@@ -31,11 +31,12 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { Saga, CommandBus, EventBus, ofType } from '@nestjs/cqrs';
-import { Observable, filter, map, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import {
   ClientCreatedEvent,
   ClientUpdatedEvent,
   ClientDeletedEvent
+  ClientHighCreditLimitDetectedEvent,
 } from '../events/exporting.event';
 import {
   SagaClientFailedEvent
@@ -97,6 +98,17 @@ export class ClientCrudSaga {
         // return this.commandBus.execute(new CompensateDeleteCommand(...));
         return null;
       })
+    );
+  };
+
+  @Saga()
+  onClientHighCreditLimitDetected = ($events: Observable<ClientHighCreditLimitDetectedEvent>) => {
+    return $events.pipe(
+      ofType(ClientHighCreditLimitDetectedEvent),
+      tap(event => {
+        this.logger.log(`Saga iniciada para evento de dominio ClientHighCreditLimitDetected: ${event.aggregateId}`);
+      }),
+      map(() => null)
     );
   };
 

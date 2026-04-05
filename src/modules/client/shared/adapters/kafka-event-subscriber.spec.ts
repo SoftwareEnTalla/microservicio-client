@@ -28,16 +28,20 @@
  *
  */
 
+import { KafkaEventSubscriber } from './kafka-event-subscriber';
+import { EVENT_TOPICS } from '../../events/event-registry';
 
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetClientByIdQuery } from '../getclientbyid.query';
-import { ClientQueryService } from '../../services/clientquery.service';
+describe('KafkaEventSubscriber', () => {
+  it('se suscribe a los tópicos registrados', async () => {
+    process.env.KAFKA_ENABLED = 'true';
+    const subscribe = jest.fn().mockResolvedValue(undefined);
+    const connect = jest.fn().mockResolvedValue(undefined);
+    const publish = jest.fn();
+    const subscriber = new KafkaEventSubscriber({ connect, subscribe } as any, { publish } as any);
 
-@QueryHandler(GetClientByIdQuery)
-export class GetClientByIdHandler implements IQueryHandler<GetClientByIdQuery> {
-  constructor(private readonly queryService: ClientQueryService) {}
+    await subscriber.onModuleInit();
 
-  async execute(query: GetClientByIdQuery) {
-    return this.queryService.findOne({ where: { id: query.filters?.id } });
-  }
-}
+    expect(connect).toHaveBeenCalled();
+    expect(subscribe).toHaveBeenCalledWith(EVENT_TOPICS, expect.any(Function));
+  });
+});

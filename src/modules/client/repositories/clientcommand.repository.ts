@@ -49,10 +49,11 @@ import { LoggerClient } from 'src/common/logger/logger.client';
 import { logger } from '@core/logs/logger';
 
 //Events and EventHandlers
-import { IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import { ClientCreatedEvent } from '../events/clientcreated.event';
 import { ClientUpdatedEvent } from '../events/clientupdated.event';
 import { ClientDeletedEvent } from '../events/clientdeleted.event';
+import { ClientHighCreditLimitDetectedEvent } from "../events/clienthighcreditlimitdetected.event";
 
 //Enfoque Event Sourcing
 import { CommandBus } from '@nestjs/cqrs';
@@ -65,6 +66,7 @@ import { EventSourcingHelper } from '../shared/decorators/event-sourcing.helper'
 import { EventSourcingConfigOptions } from '../shared/decorators/event-sourcing.decorator';
 
 
+@EventsHandler(ClientCreatedEvent, ClientUpdatedEvent, ClientDeletedEvent, ClientHighCreditLimitDetectedEvent)
 @Injectable()
 export class ClientCommandRepository implements IEventHandler<BaseEvent>{
 
@@ -155,6 +157,8 @@ export class ClientCommandRepository implements IEventHandler<BaseEvent>{
         return await this.onClientUpdated(event);
       case 'ClientDeletedEvent':
         return await this.onClientDeleted(event);
+      case 'ClientHighCreditLimitDetectedEvent':
+        return await this.onClientHighCreditLimitDetected(event);
     }
     return false;
   }
@@ -246,6 +250,20 @@ export class ClientCommandRepository implements IEventHandler<BaseEvent>{
   private async onClientDeleted(event: ClientDeletedEvent) {
     logger.info('Ready to handle onClientDeleted event on repository:', event);
     return await this.repository.delete(event.aggregateId);
+  }
+
+  private async onClientHighCreditLimitDetected(event: ClientHighCreditLimitDetectedEvent) {
+    logger.info('Ready to handle onClientHighCreditLimitDetected event on repository:', event);
+    const payloadInstance = (event as any).payload?.instance;
+    if (payloadInstance) {
+      const projectedEntity = this.repository.create({
+        ...(payloadInstance as any),
+        id: event.aggregateId,
+        type: 'client'
+      } as Partial<Client>);
+      return await this.repository.save(projectedEntity as Client);
+    }
+    return true;
   }
 
 

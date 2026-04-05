@@ -29,15 +29,22 @@
  */
 
 
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetClientByIdQuery } from '../getclientbyid.query';
-import { ClientQueryService } from '../../services/clientquery.service';
+import { BaseEvent } from './base.event';
+import { ClientCreatedEvent } from './clientcreated.event';
+import { ClientUpdatedEvent } from './clientupdated.event';
+import { ClientDeletedEvent } from './clientdeleted.event';
+import { ClientHighCreditLimitDetectedEvent } from './clienthighcreditlimitdetected.event';
 
-@QueryHandler(GetClientByIdQuery)
-export class GetClientByIdHandler implements IQueryHandler<GetClientByIdQuery> {
-  constructor(private readonly queryService: ClientQueryService) {}
+export type RegisteredEventClass<T extends BaseEvent = BaseEvent> = new (
+  aggregateId: string,
+  payload: any
+) => T;
 
-  async execute(query: GetClientByIdQuery) {
-    return this.queryService.findOne({ where: { id: query.filters?.id } });
-  }
-}
+export const EVENT_REGISTRY: Record<string, RegisteredEventClass> = {
+  'client-created': ClientCreatedEvent,
+  'client-updated': ClientUpdatedEvent,
+  'client-deleted': ClientDeletedEvent,
+  'client-high-credit-limit-detected': ClientHighCreditLimitDetectedEvent,
+};
+
+export const EVENT_TOPICS = Object.keys(EVENT_REGISTRY);

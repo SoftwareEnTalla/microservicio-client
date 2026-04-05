@@ -28,16 +28,19 @@
  *
  */
 
+import { of, lastValueFrom } from 'rxjs';
+import { ClientCrudSaga } from './client-crud.saga';
+import { ClientCreatedEvent } from '../events/clientcreated.event';
 
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetClientByIdQuery } from '../getclientbyid.query';
-import { ClientQueryService } from '../../services/clientquery.service';
+describe('ClientCrudSaga', () => {
+  it('reacciona al evento de creación sin romper el flujo CQRS', async () => {
+    const saga = new ClientCrudSaga({ execute: jest.fn() } as any, { publish: jest.fn() } as any);
+    const event = new ClientCreatedEvent('agg-1', {
+      instance: { id: 'agg-1' },
+      metadata: { initiatedBy: 'test', correlationId: 'agg-1' },
+    });
 
-@QueryHandler(GetClientByIdQuery)
-export class GetClientByIdHandler implements IQueryHandler<GetClientByIdQuery> {
-  constructor(private readonly queryService: ClientQueryService) {}
-
-  async execute(query: GetClientByIdQuery) {
-    return this.queryService.findOne({ where: { id: query.filters?.id } });
-  }
-}
+    const result = await lastValueFrom(saga.onClientCreated(of(event)));
+    expect(result).toBeNull();
+  });
+});

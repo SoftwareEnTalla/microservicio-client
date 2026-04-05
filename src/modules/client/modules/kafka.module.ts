@@ -57,6 +57,10 @@ export class KafkaModule implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    if (process.env.KAFKA_ENABLED !== 'true') {
+      this.logger.warn('Kafka deshabilitado por configuración. Se omite inicialización del módulo Kafka.');
+      return;
+    }
     try {
       this.logger.log("Initializing Kafka module...");
 

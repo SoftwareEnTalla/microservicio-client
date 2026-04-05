@@ -40,20 +40,33 @@ export class KafkaService implements OnModuleDestroy {
   private kafka: Kafka;
   private producer: Producer;
   private consumer: Consumer;
+  private readonly subscribedTopics = new Set<string>();
+  private readonly topicHandlers = new Map<string, KafkaMessageCallback<any>[]>();
+  private connected = false;
+  private consumerRunning = false;
 
   private adminClient: Admin | null = null;
 
   constructor() {
+    const brokers = (process.env.KAFKA_BROKERS || 'kafka:9092')
+      .split(',')
+      .map((broker) => broker.trim())
+      .filter(Boolean);
     this.kafka = new Kafka({
-      brokers: ["kafka:9092"],
+      clientId: process.env.KAFKA_CLIENT_ID || 'nestjs-client',
+      brokers,
     });
     this.producer = this.kafka.producer();
-    this.consumer = this.kafka.consumer({ groupId: "nestjs-group" });
+    this.consumer = this.kafka.consumer({ groupId: process.env.KAFKA_GROUP_ID || 'nestjs-group' });
     this.adminClient = this.kafka.admin();
   }
 
   async connect() {
+    if (this.connected) {
+      return;
+    }
     await Promise.all([this.producer.connect(), this.consumer.connect()]);
+    this.connected = true;
   }
 
   private async isAdminConnected(): Promise<boolean> {
@@ -95,6 +108,7 @@ export class KafkaService implements OnModuleDestroy {
     }
   }
   async sendMessage(topic: string, message: any) {
+    await this.connect();
     await this.producer.send({
       topic,
       messages: [
@@ -113,26 +127,43 @@ export class KafkaService implements OnModuleDestroy {
     topic: string | string[],
     callback: KafkaMessageCallback<T>
   ): Promise<void> {
-    await this.consumer.subscribe({
-      topics: Array.isArray(topic) ? topic : [topic],
-    });
+    await this.connect();
+    const topics = Array.isArray(topic) ? topic : [topic];
 
+    for (const currentTopic of topics) {
+      const handlers = this.topicHandlers.get(currentTopic) || [];
+      handlers.push(callback as KafkaMessageCallback<any>);
+      this.topicHandlers.set(currentTopic, handlers);
+
+      if (!this.subscribedTopics.has(currentTopic)) {
+        await this.consumer.subscribe({ topic: currentTopic, fromBeginning: false });
+        this.subscribedTopics.add(currentTopic);
+      }
+    }
+
+    if (this.consumerRunning) {
+      return;
+    }
+
+    this.consumerRunning = true;
     await this.consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
         try {
           if (!message.value) return;
 
           const parsedMessage: T = JSON.parse(message.value.toString());
-          await callback(parsedMessage, {
-            topic,
-            partition,
-            offset: message.offset,
-            headers: message.headers,
-            timestamp: message.timestamp,
-          });
+          const handlers = this.topicHandlers.get(topic) || [];
+          for (const handler of handlers) {
+            await handler(parsedMessage, {
+              topic,
+              partition,
+              offset: message.offset,
+              headers: message.headers,
+              timestamp: message.timestamp,
+            });
+          }
         } catch (error) {
           logger.error("Error processing Kafka message:", error);
-          // Aquí puedes agregar lógica de reintento o dead-letter queue
         }
       },
     });
@@ -143,6 +174,8 @@ export class KafkaService implements OnModuleDestroy {
   }
 
   async disconnect() {
+    this.connected = false;
+    this.consumerRunning = false;
     await Promise.all([this.producer.disconnect(), this.consumer.disconnect()]);
   }
 }
