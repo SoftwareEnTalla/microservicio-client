@@ -81,7 +81,7 @@ export class KafkaModule implements OnModuleInit {
       await this.kafkaService.connect();
       this.logger.log("Successfully connected to Kafka");
 
-      await this.kafkaAdminService.ensureTopics(EVENT_ADMIN_TOPICS);
+  await this.kafkaAdminService.ensureTopics(EVENT_ADMIN_TOPICS);
       this.logger.log("Kafka topics are ready");
 
       await this.kafkaSubscriber.initializeSubscriptions();
