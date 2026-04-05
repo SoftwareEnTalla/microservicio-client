@@ -33,15 +33,21 @@ import { Module, OnModuleInit, Logger } from "@nestjs/common";
 import { CqrsModule } from "@nestjs/cqrs";
 import { KafkaService } from "../shared/messaging/kafka.service";
 import { KafkaAdminService } from "../shared/messaging/kafka-admin.service";
+import { EventIdempotencyService } from "../shared/messaging/event-idempotency.service";
+import { KafkaDeadLetterService } from "../shared/messaging/kafka-dead-letter.service";
+import { ProjectionReplayService } from "../shared/messaging/projection-replay.service";
 import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
 import { KafkaEventSubscriber } from "../shared/adapters/kafka-event-subscriber";
-import { EVENT_TOPICS } from "../events/event-registry";
+import { EVENT_ADMIN_TOPICS } from "../events/event-registry";
 
 @Module({
   imports: [CqrsModule],
   providers: [
     KafkaService,
     KafkaAdminService,
+    EventIdempotencyService,
+    KafkaDeadLetterService,
+    ProjectionReplayService,
     KafkaEventPublisher,
     KafkaEventSubscriber,
     {
@@ -49,7 +55,7 @@ import { EVENT_TOPICS } from "../events/event-registry";
       useExisting: KafkaEventPublisher,
     },
   ],
-  exports: [KafkaService, KafkaAdminService, KafkaEventPublisher, KafkaEventSubscriber],
+  exports: [KafkaService, KafkaAdminService, EventIdempotencyService, KafkaDeadLetterService, ProjectionReplayService, KafkaEventPublisher, KafkaEventSubscriber],
 })
 export class KafkaModule implements OnModuleInit {
   private readonly logger = new Logger(KafkaModule.name);
@@ -75,7 +81,7 @@ export class KafkaModule implements OnModuleInit {
       await this.kafkaService.connect();
       this.logger.log("Successfully connected to Kafka");
 
-      await this.kafkaAdminService.ensureTopics(EVENT_TOPICS);
+      await this.kafkaAdminService.ensureTopics(EVENT_ADMIN_TOPICS);
       this.logger.log("Kafka topics are ready");
 
       await this.kafkaSubscriber.initializeSubscriptions();

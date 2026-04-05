@@ -40,11 +40,63 @@ export type RegisteredEventClass<T extends BaseEvent = BaseEvent> = new (
   payload: any
 ) => T;
 
-export const EVENT_REGISTRY: Record<string, RegisteredEventClass> = {
-  'client-created': ClientCreatedEvent,
-  'client-updated': ClientUpdatedEvent,
-  'client-deleted': ClientDeletedEvent,
-  'client-high-credit-limit-detected': ClientHighCreditLimitDetectedEvent,
+export interface RegisteredEventDefinition<T extends BaseEvent = BaseEvent> {
+  topic: string;
+  eventName: string;
+  version: string;
+  eventClass: RegisteredEventClass<T>;
+  retryTopic: string;
+  dlqTopic: string;
+  maxRetries: number;
+  replayable: boolean;
+}
+
+const createEventDefinition = <T extends BaseEvent>(
+  topic: string,
+  eventClass: RegisteredEventClass<T>,
+  overrides?: Partial<Omit<RegisteredEventDefinition<T>, 'topic' | 'eventName' | 'eventClass'>>,
+): RegisteredEventDefinition<T> => ({
+  topic,
+  eventName: eventClass.name,
+  version: overrides?.version ?? '1.0.0',
+  eventClass,
+  retryTopic: overrides?.retryTopic ?? topic + '-retry',
+  dlqTopic: overrides?.dlqTopic ?? topic + '-dlq',
+  maxRetries: overrides?.maxRetries ?? 3,
+  replayable: overrides?.replayable ?? true,
+});
+
+export const EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
+  'client-created': createEventDefinition('client-created', ClientCreatedEvent),
+  'client-updated': createEventDefinition('client-updated', ClientUpdatedEvent),
+  'client-deleted': createEventDefinition('client-deleted', ClientDeletedEvent),
+  'client-high-credit-limit-detected': createEventDefinition('client-high-credit-limit-detected', ClientHighCreditLimitDetectedEvent),
 };
 
-export const EVENT_TOPICS = Object.keys(EVENT_REGISTRY);
+export const EVENT_REGISTRY: Record<string, RegisteredEventClass> = Object.fromEntries(
+  Object.values(EVENT_DEFINITIONS).map((definition) => [definition.topic, definition.eventClass])
+);
+
+export const EVENT_TOPICS = Object.values(EVENT_DEFINITIONS).map((definition) => definition.topic);
+export const EVENT_RETRY_TOPICS = Object.values(EVENT_DEFINITIONS).map((definition) => definition.retryTopic);
+export const EVENT_DLQ_TOPICS = Object.values(EVENT_DEFINITIONS).map((definition) => definition.dlqTopic);
+export const EVENT_CONSUMER_TOPICS = Array.from(new Set([...EVENT_TOPICS, ...EVENT_RETRY_TOPICS]));
+export const EVENT_ADMIN_TOPICS = Array.from(new Set([...EVENT_TOPICS, ...EVENT_RETRY_TOPICS, ...EVENT_DLQ_TOPICS]));
+
+export const resolveEventDefinition = (candidate?: string): RegisteredEventDefinition | undefined => {
+  if (!candidate) {
+    return undefined;
+  }
+
+  if (EVENT_DEFINITIONS[candidate]) {
+    return EVENT_DEFINITIONS[candidate];
+  }
+
+  return Object.values(EVENT_DEFINITIONS).find(
+    (definition) =>
+      definition.topic === candidate ||
+      definition.retryTopic === candidate ||
+      definition.dlqTopic === candidate ||
+      definition.eventName === candidate,
+  );
+};

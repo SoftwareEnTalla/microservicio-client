@@ -31,6 +31,7 @@
 import { KafkaEventPublisher } from './kafka-event-publisher';
 import { describe, expect, it, jest } from '@jest/globals';
 import { ClientCreatedEvent } from '../../events/clientcreated.event';
+import { resolveEventDefinition } from '../../events/event-registry';
 
 describe('KafkaEventPublisher', () => {
   it('resuelve el tópico a partir del nombre del evento', async () => {
@@ -44,6 +45,18 @@ describe('KafkaEventPublisher', () => {
 
     await publisher.publish(event);
 
-    expect(sendMessage).toHaveBeenCalledWith('client-created', event);
+    const eventDefinition = resolveEventDefinition('client-created');
+    expect(sendMessage).toHaveBeenCalledWith(
+      'client-created',
+      event,
+      expect.objectContaining({
+        key: 'agg-1',
+        headers: expect.objectContaining({
+          'event-version': eventDefinition?.version,
+          'event-id': expect.any(String),
+          'trace-id': 'agg-1',
+        }),
+      }),
+    );
   });
 });

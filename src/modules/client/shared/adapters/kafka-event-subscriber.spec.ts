@@ -30,7 +30,7 @@
 
 import { KafkaEventSubscriber } from './kafka-event-subscriber';
 import { describe, expect, it, jest } from '@jest/globals';
-import { EVENT_TOPICS } from '../../events/event-registry';
+import { EVENT_CONSUMER_TOPICS } from '../../events/event-registry';
 
 describe('KafkaEventSubscriber', () => {
   it('se suscribe a los tópicos registrados', async () => {
@@ -38,11 +38,11 @@ describe('KafkaEventSubscriber', () => {
     const subscribe = jest.fn(async () => undefined);
     const connect = jest.fn(async () => undefined);
     const publish = jest.fn();
-    const subscriber = new KafkaEventSubscriber({ connect, subscribe } as any, { publish } as any);
+    const subscriber = new KafkaEventSubscriber({ connect, subscribe } as any, { publish } as any, { hasProcessed: () => false, markProcessed: jest.fn(), buildKey: jest.fn(() => 'idempotency-key') } as any, { publish: jest.fn() } as any);
 
     await subscriber.initializeSubscriptions();
 
     expect(connect).toHaveBeenCalled();
-    expect(subscribe).toHaveBeenCalledWith(EVENT_TOPICS, expect.any(Function));
+    expect(subscribe).toHaveBeenCalledWith(EVENT_CONSUMER_TOPICS, expect.any(Function));
   });
 });
