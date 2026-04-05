@@ -41,14 +41,6 @@ export class CreateClientHandler
     private readonly commandService: ClientCommandService
   ) {}
   async execute(command: CreateClientCommand) {
-    if ("create" === "create") {
-      return await this.commandService.create(command.payload);
-    }
-    if ("create" === "update") {
-      const id = String(command.payload?.id ?? command.id ?? '');
-      return await this.commandService.update(id, command.payload);
-    }
-    const id = String(command.payload?.id ?? command.id ?? '');
-    return await this.commandService.delete(id);
+    return await this.commandService.create(command.payload);
   }
 }

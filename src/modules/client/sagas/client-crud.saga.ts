@@ -35,7 +35,7 @@ import { Observable, map, tap } from 'rxjs';
 import {
   ClientCreatedEvent,
   ClientUpdatedEvent,
-  ClientDeletedEvent
+  ClientDeletedEvent,
   ClientHighCreditLimitDetectedEvent,
 } from '../events/exporting.event';
 import {

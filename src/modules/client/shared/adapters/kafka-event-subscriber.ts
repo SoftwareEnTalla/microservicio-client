@@ -69,7 +69,7 @@ export class KafkaEventSubscriber implements OnModuleInit {
         const eventClass = this.resolveEventClass(topic, eventType);
       
       if (!eventClass) {
-          this.logger.warn();
+          this.logger.warn('No handler for event type: ' + String(eventType || topic || 'unknown'));
         return;
       }
 
@@ -82,7 +82,7 @@ export class KafkaEventSubscriber implements OnModuleInit {
     }
   }
 
-    private resolveEventClass(topic?: string, eventType?: string): new (...args: any[]) => any {
+    private resolveEventClass(topic?: string, eventType?: string): (new (...args: any[]) => any) | undefined {
       const normalizedTopic = topic || this.normalizeEventTypeToTopic(eventType);
       return normalizedTopic ? EVENT_REGISTRY[normalizedTopic] : undefined;
     }
@@ -106,7 +106,7 @@ export class KafkaEventSubscriber implements OnModuleInit {
       }
       return eventType
         .replace(/Event$/, '')
-        .replace(/([a-z])([A-Z])/g, '-')
+        .replace(/([a-z])([A-Z])/g, (_match, first, second) => first + '-' + second)
         .toLowerCase();
   }
 }

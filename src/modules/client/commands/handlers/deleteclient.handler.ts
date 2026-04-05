@@ -41,13 +41,6 @@ export class DeleteClientHandler
     private readonly commandService: ClientCommandService
   ) {}
   async execute(command: DeleteClientCommand) {
-    if ("delete" === "create") {
-      return await this.commandService.create(command.payload);
-    }
-    if ("delete" === "update") {
-      const id = String(command.payload?.id ?? command.id ?? '');
-      return await this.commandService.update(id, command.payload);
-    }
     const id = String(command.payload?.id ?? command.id ?? '');
     return await this.commandService.delete(id);
   }

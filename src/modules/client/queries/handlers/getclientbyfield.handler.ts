@@ -38,6 +38,6 @@ export class GetClientByFieldHandler implements IQueryHandler<GetClientByFieldQu
   constructor(private readonly queryService: ClientQueryService) {}
 
   async execute(query: GetClientByFieldQuery) {
-    return this.queryService.findByField(query.filters?.field, query.filters?.value, query.filters?.page ?? 1, query.filters?.limit ?? 10);
+    return this.queryService.findByField(query.filters?.field, query.filters?.value, { page: query.filters?.page ?? 1, size: query.filters?.limit ?? 10 } as any);
   }
 }
