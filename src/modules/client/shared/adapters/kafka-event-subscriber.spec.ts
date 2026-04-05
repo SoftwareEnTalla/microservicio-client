@@ -28,18 +28,19 @@
  *
  */
 
+import { describe, expect, it, jest } from '@jest/globals';
 import { KafkaEventSubscriber } from './kafka-event-subscriber';
 import { EVENT_TOPICS } from '../../events/event-registry';
 
 describe('KafkaEventSubscriber', () => {
   it('se suscribe a los tópicos registrados', async () => {
     process.env.KAFKA_ENABLED = 'true';
-    const subscribe = jest.fn().mockResolvedValue(undefined);
-    const connect = jest.fn().mockResolvedValue(undefined);
+    const subscribe = jest.fn(async () => undefined);
+    const connect = jest.fn(async () => undefined);
     const publish = jest.fn();
     const subscriber = new KafkaEventSubscriber({ connect, subscribe } as any, { publish } as any);
 
-    await subscriber.onModuleInit();
+    await subscriber.initializeSubscriptions();
 
     expect(connect).toHaveBeenCalled();
     expect(subscribe).toHaveBeenCalledWith(EVENT_TOPICS, expect.any(Function));

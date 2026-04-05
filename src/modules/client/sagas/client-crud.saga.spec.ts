@@ -28,6 +28,7 @@
  *
  */
 
+import { describe, expect, it, jest } from '@jest/globals';
 import { of, lastValueFrom } from 'rxjs';
 import { ClientCrudSaga } from './client-crud.saga';
 import { ClientCreatedEvent } from '../events/clientcreated.event';
@@ -36,7 +37,7 @@ describe('ClientCrudSaga', () => {
   it('reacciona al evento de creación sin romper el flujo CQRS', async () => {
     const saga = new ClientCrudSaga({ execute: jest.fn() } as any, { publish: jest.fn() } as any);
     const event = new ClientCreatedEvent('agg-1', {
-      instance: { id: 'agg-1' },
+      instance: { id: 'agg-1' } as any,
       metadata: { initiatedBy: 'test', correlationId: 'agg-1' },
     });
 

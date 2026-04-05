@@ -28,16 +28,17 @@
  *
  */
 
+import { describe, expect, it, jest } from '@jest/globals';
 import { KafkaEventPublisher } from './kafka-event-publisher';
 import { ClientCreatedEvent } from '../../events/clientcreated.event';
 
 describe('KafkaEventPublisher', () => {
   it('resuelve el tópico a partir del nombre del evento', async () => {
     process.env.KAFKA_ENABLED = 'true';
-    const sendMessage = jest.fn().mockResolvedValue(undefined);
+    const sendMessage = jest.fn(async () => undefined);
     const publisher = new KafkaEventPublisher({ sendMessage } as any);
     const event = new ClientCreatedEvent('agg-1', {
-      instance: { id: 'agg-1' },
+      instance: { id: 'agg-1' } as any,
       metadata: { initiatedBy: 'test', correlationId: 'agg-1' },
     });
 

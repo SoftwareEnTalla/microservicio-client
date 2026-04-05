@@ -145,7 +145,7 @@ export class BaseClientDto {
   @IsUUID()
   @IsOptional()
   @Field(() => String, { description: 'Tipo de cliente', nullable: true })
-  clientTypeId?: string = '';
+  clientTypeId?: string;
 
   @ApiProperty({
     type: () => String,
@@ -155,7 +155,7 @@ export class BaseClientDto {
   @IsUUID()
   @IsOptional()
   @Field(() => String, { description: 'Segmento de cliente', nullable: true })
-  clientSegmentId?: string = '';
+  clientSegmentId?: string;
 
   @ApiProperty({
     type: () => String,
@@ -165,7 +165,7 @@ export class BaseClientDto {
   @IsUUID()
   @IsOptional()
   @Field(() => String, { description: 'Nivel de fidelidad del cliente', nullable: true })
-  clientLoyaltyTierId?: string = '';
+  clientLoyaltyTierId?: string;
 
   // Constructor
   constructor(partial: Partial<BaseClientDto>) {

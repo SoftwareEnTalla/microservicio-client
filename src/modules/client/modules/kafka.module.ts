@@ -65,29 +65,28 @@ export class KafkaModule implements OnModuleInit {
       this.logger.warn('Kafka deshabilitado por configuración. Se omite inicialización del módulo Kafka.');
       return;
     }
+    void this.bootstrapKafka();
+  }
+
+  private async bootstrapKafka(attempt: number = 1, maxRetries: number = 10): Promise<void> {
     try {
       this.logger.log("Initializing Kafka module...");
 
-      // 1. Conectar a Kafka primero
       await this.kafkaService.connect();
       this.logger.log("Successfully connected to Kafka");
 
-      // 1.1 Crear tópicos registrados para CQRS/eventos
-      for (const topic of EVENT_TOPICS) {
-        await this.kafkaAdminService.createTopicIfNotExists(topic);
-      }
+      await this.kafkaAdminService.ensureTopics(EVENT_TOPICS);
+      this.logger.log("Kafka topics are ready");
 
-      // 2. Inicializar el suscriptor de eventos
-      await this.kafkaSubscriber.onModuleInit();
+      await this.kafkaSubscriber.initializeSubscriptions();
       this.logger.log("Kafka event subscribers initialized");
 
-      // 3. Opcional: Verificar conexión con un ping
       await this.verifyKafkaConnection();
 
       this.logger.log("Kafka module initialized successfully");
     } catch (error: any) {
       this.logger.error("Failed to initialize Kafka module", error.stack);
-      this.scheduleKafkaRecovery(1);
+      this.scheduleKafkaRecovery(attempt, maxRetries);
     }
   }
 
@@ -117,13 +116,7 @@ export class KafkaModule implements OnModuleInit {
     setTimeout(async () => {
       this.logger.warn('Retrying Kafka initialization (attempt ' + attempt + '/' + maxRetries + ')...');
       try {
-        await this.kafkaService.connect();
-        for (const topic of EVENT_TOPICS) {
-          await this.kafkaAdminService.createTopicIfNotExists(topic);
-        }
-        await this.kafkaSubscriber.onModuleInit();
-        await this.verifyKafkaConnection();
-        this.logger.log("Kafka module recovered after retry");
+        await this.bootstrapKafka(attempt + 1, maxRetries);
       } catch (retryError: any) {
         this.logger.warn('Retry attempt ' + attempt + ' failed: ' + retryError.message);
         this.scheduleKafkaRecovery(attempt + 1, maxRetries);

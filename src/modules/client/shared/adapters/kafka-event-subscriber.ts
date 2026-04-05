@@ -29,27 +29,32 @@
  */
 
 
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { KafkaService } from '../messaging/kafka.service';
   import { EVENT_REGISTRY, EVENT_TOPICS } from '../../events/event-registry';
 
 @Injectable()
-export class KafkaEventSubscriber implements OnModuleInit {
+export class KafkaEventSubscriber {
   private readonly logger = new Logger(KafkaEventSubscriber.name);
+  private initialized = false;
 
   constructor(
     private readonly kafkaService: KafkaService,
     private readonly eventBus: EventBus
   ) {}
 
-  async onModuleInit() {
-      if (process.env.KAFKA_ENABLED !== 'true') {
-        this.logger.warn('Kafka está deshabilitado. No se inicializan suscriptores.');
-        return;
-      }
+  async initializeSubscriptions() {
+    if (this.initialized) {
+      return;
+    }
+    if (process.env.KAFKA_ENABLED !== 'true') {
+      this.logger.warn('Kafka está deshabilitado. No se inicializan suscriptores.');
+      return;
+    }
     await this.kafkaService.connect();
     await this.setupSubscriptions();
+    this.initialized = true;
   }
 
   private async setupSubscriptions() {

@@ -109,7 +109,7 @@ export class Client extends BaseEntity {
   @IsOptional()
   @Field(() => String, { description: 'Tipo de cliente', nullable: true })
   @Column({ type: 'uuid', nullable: true, comment: 'Tipo de cliente' })
-  clientTypeId?: string = '';
+  clientTypeId?: string;
 
   @ApiProperty({
     type: () => ClientType,
@@ -130,7 +130,7 @@ export class Client extends BaseEntity {
   @IsOptional()
   @Field(() => String, { description: 'Segmento de cliente', nullable: true })
   @Column({ type: 'uuid', nullable: true, comment: 'Segmento de cliente' })
-  clientSegmentId?: string = '';
+  clientSegmentId?: string;
 
   @ApiProperty({
     type: () => ClientSegment,
@@ -151,7 +151,7 @@ export class Client extends BaseEntity {
   @IsOptional()
   @Field(() => String, { description: 'Nivel de fidelidad del cliente', nullable: true })
   @Column({ type: 'uuid', nullable: true, comment: 'Nivel de fidelidad del cliente' })
-  clientLoyaltyTierId?: string = '';
+  clientLoyaltyTierId?: string;
 
   @ApiProperty({
     type: () => ClientLoyaltyTier,
