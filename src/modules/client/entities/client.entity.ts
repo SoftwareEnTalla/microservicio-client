@@ -41,7 +41,7 @@ import { ClientLoyaltyTier } from '../../client-loyalty-tier/entities/client-loy
 
 @Index('idx_client_code', ['code'], { unique: true })
 @Index('idx_client_email', ['email'], { unique: true })
-@Check('chk_client_credit_limit_non_negative', 'creditLimit >= 0')
+@Check('chk_client_credit_limit_non_negative', '"creditLimit" >= 0')
 @Unique('uq_client_code', ['code'])
 @ChildEntity('client')
 @ObjectType()
