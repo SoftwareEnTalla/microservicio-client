@@ -66,11 +66,34 @@ const createEventDefinition = <T extends BaseEvent>(
   replayable: overrides?.replayable ?? true,
 });
 
+const EVENT_DEFINITION_OVERRIDES: Partial<Record<string, Partial<Omit<RegisteredEventDefinition, 'topic' | 'eventName' | 'eventClass'>>>> = {
+  'client-created': {
+    version: '1.0.0',
+    maxRetries: 5,
+    replayable: true,
+  },
+  'client-updated': {
+    version: '1.0.0',
+    maxRetries: 5,
+    replayable: true,
+  },
+  'client-deleted': {
+    version: '1.0.0',
+    maxRetries: 2,
+    replayable: false,
+  },
+  'client-high-credit-limit-detected': {
+    version: '1.1.0',
+    maxRetries: 5,
+    replayable: true,
+  },
+};
+
 export const EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
-  'client-created': createEventDefinition('client-created', ClientCreatedEvent),
-  'client-updated': createEventDefinition('client-updated', ClientUpdatedEvent),
-  'client-deleted': createEventDefinition('client-deleted', ClientDeletedEvent),
-  'client-high-credit-limit-detected': createEventDefinition('client-high-credit-limit-detected', ClientHighCreditLimitDetectedEvent),
+  'client-created': createEventDefinition('client-created', ClientCreatedEvent, EVENT_DEFINITION_OVERRIDES['client-created']),
+  'client-updated': createEventDefinition('client-updated', ClientUpdatedEvent, EVENT_DEFINITION_OVERRIDES['client-updated']),
+  'client-deleted': createEventDefinition('client-deleted', ClientDeletedEvent, EVENT_DEFINITION_OVERRIDES['client-deleted']),
+  'client-high-credit-limit-detected': createEventDefinition('client-high-credit-limit-detected', ClientHighCreditLimitDetectedEvent, EVENT_DEFINITION_OVERRIDES['client-high-credit-limit-detected']),
 };
 
 export const EVENT_REGISTRY: Record<string, RegisteredEventClass> = Object.fromEntries(
