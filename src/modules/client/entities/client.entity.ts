@@ -28,7 +28,7 @@
  *
  */
 
-import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne } from 'typeorm';
+import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne, OneToMany, ManyToMany, JoinTable, Index, Check, Unique } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { CreateClientDto, UpdateClientDto, DeleteClientDto } from '../dtos/all-dto';
 import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
@@ -39,6 +39,10 @@ import { ClientType } from '../../client-type/entities/client-type.entity';
 import { ClientSegment } from '../../client-segment/entities/client-segment.entity';
 import { ClientLoyaltyTier } from '../../client-loyalty-tier/entities/client-loyalty-tier.entity';
 
+@Index('idx_client_code', ['code'], { unique: true })
+@Index('idx_client_email', ['email'], { unique: true })
+@Check('chk_client_credit_limit_non_negative', 'creditLimit >= 0')
+@Unique('uq_client_code', ['code'])
 @ChildEntity('client')
 @ObjectType()
 export class Client extends BaseEntity {
@@ -113,7 +117,7 @@ export class Client extends BaseEntity {
     description: 'Relación con ClientType',
   })
   @Field(() => ClientType, { nullable: true })
-  @ManyToOne(() => ClientType, { nullable: true })
+  @ManyToOne(() => ClientType, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'clientTypeId' })
   clientType?: ClientType;
 
@@ -134,7 +138,7 @@ export class Client extends BaseEntity {
     description: 'Relación con ClientSegment',
   })
   @Field(() => ClientSegment, { nullable: true })
-  @ManyToOne(() => ClientSegment, { nullable: true })
+  @ManyToOne(() => ClientSegment, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'clientSegmentId' })
   clientSegment?: ClientSegment;
 
@@ -155,9 +159,23 @@ export class Client extends BaseEntity {
     description: 'Relación con ClientLoyaltyTier',
   })
   @Field(() => ClientLoyaltyTier, { nullable: true })
-  @ManyToOne(() => ClientLoyaltyTier, { nullable: true })
+  @ManyToOne(() => ClientLoyaltyTier, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'clientLoyaltyTierId' })
   clientLoyaltyTier?: ClientLoyaltyTier;
+
+  protected executeDslLifecycle(): void {
+    // Rule: credit-limit-must-be-non-negative
+    // El límite de crédito debe ser mayor o igual a 0
+    if (!(this.creditLimit >= 0)) {
+      throw new Error('CLIENT_001: El límite de crédito no puede ser negativo');
+    }
+
+    // Rule: active-client-requires-email
+    // Si el cliente se activa debe existir correo principal
+    if (!(this.isActive === true && (this.email !== undefined && this.email !== null && this.email !== ''))) {
+      console.warn('CLIENT_002: Se recomienda definir correo principal para clientes activos');
+    }
+  }
 
   // Relación con BaseEntity (opcional, si aplica)
   // @OneToOne(() => BaseEntity, { cascade: true })
@@ -183,11 +201,13 @@ export class Client extends BaseEntity {
   // Métodos abstractos implementados
   async create(data: any): Promise<BaseEntity> {
     Object.assign(this, data);
+    this.executeDslLifecycle();
     this.modificationDate = new Date();
     return this;
   }
   async update(data: any): Promise<BaseEntity> {
     Object.assign(this, data);
+    this.executeDslLifecycle();
     this.modificationDate = new Date();
     return this;
   }

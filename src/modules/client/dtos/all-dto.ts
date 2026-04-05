@@ -142,7 +142,7 @@ export class BaseClientDto {
     nullable: true,
     description: 'Tipo de cliente',
   })
-  @IsString()
+  @IsUUID()
   @IsOptional()
   @Field(() => String, { description: 'Tipo de cliente', nullable: true })
   clientTypeId?: string = '';
@@ -152,7 +152,7 @@ export class BaseClientDto {
     nullable: true,
     description: 'Segmento de cliente',
   })
-  @IsString()
+  @IsUUID()
   @IsOptional()
   @Field(() => String, { description: 'Segmento de cliente', nullable: true })
   clientSegmentId?: string = '';
@@ -162,7 +162,7 @@ export class BaseClientDto {
     nullable: true,
     description: 'Nivel de fidelidad del cliente',
   })
-  @IsString()
+  @IsUUID()
   @IsOptional()
   @Field(() => String, { description: 'Nivel de fidelidad del cliente', nullable: true })
   clientLoyaltyTierId?: string = '';
