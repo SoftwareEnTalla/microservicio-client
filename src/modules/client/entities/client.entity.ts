@@ -175,6 +175,10 @@ export class Client extends BaseEntity {
     if (!(this.isActive === true && (this.email !== undefined && this.email !== null && this.email !== ''))) {
       console.warn('CLIENT_002: Se recomienda definir correo principal para clientes activos');
     }
+
+    // Rule: high-credit-limit-emits-domain-event
+    // Cuando el límite de crédito sea alto se debe emitir un evento de dominio
+    // TODO DSL emit-event: ClientHighCreditLimitDetected
   }
 
   // Relación con BaseEntity (opcional, si aplica)

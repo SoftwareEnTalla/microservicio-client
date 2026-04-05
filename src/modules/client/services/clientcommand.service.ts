@@ -50,6 +50,8 @@ import { EventStoreService } from "../shared/event-store/event-store.service";
 import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
 import { ModuleRef } from "@nestjs/core";
 import { ClientQueryService } from "./clientquery.service";
+import { BaseEvent } from "../events/base.event";
+import { ClientHighCreditLimitDetectedEvent } from '../events/clienthighcreditlimitdetected.event';
 
 @Injectable()
 export class ClientCommandService implements OnModuleInit {
@@ -90,6 +92,85 @@ export class ClientCommandService implements OnModuleInit {
     //Se ejecuta en la inicialización del módulo
   }
 
+  private dslValue(entityData: Record<string, any>, currentData: Record<string, any>, inputData: Record<string, any>, field: string): any {
+    return entityData?.[field] ?? currentData?.[field] ?? inputData?.[field];
+  }
+
+  private async publishDslDomainEvents(events: BaseEvent[]): Promise<void> {
+    for (const event of events) {
+      await this.eventPublisher.publish(event as any);
+      if (process.env.EVENT_STORE_ENABLED === "true") {
+        await this.eventStore.appendEvent(, event);
+      }
+    }
+  }
+
+  private async applyDslServiceRules(
+    operation: "create" | "update" | "delete",
+    inputData: Record<string, any>,
+    entity?: Client | null,
+    current?: Client | null,
+    publishEvents: boolean = true,
+  ): Promise<void> {
+    const entityData = ((entity ?? {}) as Record<string, any>);
+    const currentData = ((current ?? {}) as Record<string, any>);
+    const pendingEvents: BaseEvent[] = [];
+    if (operation === 'create') {
+      // Regla de servicio: credit-limit-must-be-non-negative
+      // El límite de crédito debe ser mayor o igual a 0
+      if (!((this.dslValue(entityData, currentData, inputData, 'creditLimit') === undefined || this.dslValue(entityData, currentData, inputData, 'creditLimit') === null || this.dslValue(entityData, currentData, inputData, 'creditLimit') >= 0))) {
+        throw new Error('CLIENT_001: El límite de crédito no puede ser negativo');
+      }
+
+      // Regla de servicio: active-client-requires-email
+      // Si el cliente se activa debe existir correo principal
+      if (!(this.dslValue(entityData, currentData, inputData, 'isActive') === true && (this.dslValue(entityData, currentData, inputData, 'email') !== undefined && this.dslValue(entityData, currentData, inputData, 'email') !== null && this.dslValue(entityData, currentData, inputData, 'email') !== ''))) {
+        logger.warn('CLIENT_002: Se recomienda definir correo principal para clientes activos');
+      }
+
+      // Regla de servicio: high-credit-limit-emits-domain-event
+      // Cuando el límite de crédito sea alto se debe emitir un evento de dominio
+      if ((this.dslValue(entityData, currentData, inputData, 'creditLimit') === undefined || this.dslValue(entityData, currentData, inputData, 'creditLimit') === null || this.dslValue(entityData, currentData, inputData, 'creditLimit') >= 10000)) {
+        pendingEvents.push(ClientHighCreditLimitDetectedEvent.create(
+          String(entityData['id'] ?? currentData['id'] ?? inputData?.id ?? 'client-create'),
+          (entity ?? current ?? inputData ?? {}) as any,
+          String(entityData['createdBy'] ?? currentData['createdBy'] ?? inputData?.createdBy ?? 'system'),
+          String(entityData['id'] ?? currentData['id'] ?? inputData?.id ?? 'client-create')
+        ));
+      }
+
+    }
+
+    if (operation === 'update') {
+      // Regla de servicio: credit-limit-must-be-non-negative
+      // El límite de crédito debe ser mayor o igual a 0
+      if (!((this.dslValue(entityData, currentData, inputData, 'creditLimit') === undefined || this.dslValue(entityData, currentData, inputData, 'creditLimit') === null || this.dslValue(entityData, currentData, inputData, 'creditLimit') >= 0))) {
+        throw new Error('CLIENT_001: El límite de crédito no puede ser negativo');
+      }
+
+      // Regla de servicio: active-client-requires-email
+      // Si el cliente se activa debe existir correo principal
+      if (!(this.dslValue(entityData, currentData, inputData, 'isActive') === true && (this.dslValue(entityData, currentData, inputData, 'email') !== undefined && this.dslValue(entityData, currentData, inputData, 'email') !== null && this.dslValue(entityData, currentData, inputData, 'email') !== ''))) {
+        logger.warn('CLIENT_002: Se recomienda definir correo principal para clientes activos');
+      }
+
+      // Regla de servicio: high-credit-limit-emits-domain-event
+      // Cuando el límite de crédito sea alto se debe emitir un evento de dominio
+      if ((this.dslValue(entityData, currentData, inputData, 'creditLimit') === undefined || this.dslValue(entityData, currentData, inputData, 'creditLimit') === null || this.dslValue(entityData, currentData, inputData, 'creditLimit') >= 10000)) {
+        pendingEvents.push(ClientHighCreditLimitDetectedEvent.create(
+          String(entityData['id'] ?? currentData['id'] ?? inputData?.id ?? 'client-update'),
+          (entity ?? current ?? inputData ?? {}) as any,
+          String(entityData['createdBy'] ?? currentData['createdBy'] ?? inputData?.createdBy ?? 'system'),
+          String(entityData['id'] ?? currentData['id'] ?? inputData?.id ?? 'client-update')
+        ));
+      }
+
+    }
+    if (publishEvents) {
+      await this.publishDslDomainEvents(pendingEvents);
+    }
+  }
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
@@ -118,9 +199,10 @@ export class ClientCommandService implements OnModuleInit {
   ): Promise<ClientResponse<Client>> {
     try {
       logger.info("Receiving in service:", createClientDtoInput);
-      const entity = await this.repository.create(
-        Client.fromDto(createClientDtoInput)
-      );
+      const candidate = Client.fromDto(createClientDtoInput);
+      await this.applyDslServiceRules("create", createClientDtoInput as Record<string, any>, candidate, null, false);
+      const entity = await this.repository.create(candidate);
+      await this.applyDslServiceRules("create", createClientDtoInput as Record<string, any>, entity, null, true);
       logger.info("Entity created on service:", entity);
       // Respuesta si el client no existe
       if (!entity)
@@ -219,10 +301,14 @@ export class ClientCommandService implements OnModuleInit {
     partialEntity: UpdateClientDto
   ): Promise<ClientResponse<Client>> {
     try {
+      const currentEntity = await this.queryRepository.findById(id);
+      const candidate = Object.assign(new Client(), currentEntity ?? {}, partialEntity);
+      await this.applyDslServiceRules("update", partialEntity as Record<string, any>, candidate, currentEntity, false);
       const entity = await this.repository.update(
         id,
-        Client.fromDto(partialEntity)
+        candidate
       );
+      await this.applyDslServiceRules("update", partialEntity as Record<string, any>, entity, currentEntity, true);
       // Respuesta si el client no existe
       if (!entity)
         throw new NotFoundException("Entidades Clients no encontradas.");
@@ -319,7 +405,10 @@ export class ClientCommandService implements OnModuleInit {
       if (!entity)
         throw new NotFoundException("Instancias de Client no encontradas.");
 
+      await this.applyDslServiceRules("delete", { id }, entity, entity, false);
+
       const result = await this.repository.delete(id);
+      await this.applyDslServiceRules("delete", { id }, entity, entity, true);
       // Devolver client
       return {
         ok: true,
