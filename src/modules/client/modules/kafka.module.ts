@@ -110,12 +110,12 @@ export class KafkaModule implements OnModuleInit {
   private scheduleKafkaRecovery(attempt: number, maxRetries: number = 10): void {
     const retryDelay = 5000;
     if (attempt > maxRetries) {
-      this.logger.error();
+      this.logger.error('All ' + maxRetries + ' Kafka initialization retries failed');
       return;
     }
 
     setTimeout(async () => {
-      this.logger.warn();
+      this.logger.warn('Retrying Kafka initialization (attempt ' + attempt + '/' + maxRetries + ')...');
       try {
         await this.kafkaService.connect();
         for (const topic of EVENT_TOPICS) {
@@ -125,7 +125,7 @@ export class KafkaModule implements OnModuleInit {
         await this.verifyKafkaConnection();
         this.logger.log("Kafka module recovered after retry");
       } catch (retryError: any) {
-        this.logger.warn(, retryError.message);
+        this.logger.warn('Retry attempt ' + attempt + ' failed: ' + retryError.message);
         this.scheduleKafkaRecovery(attempt + 1, maxRetries);
       }
     }, retryDelay);
