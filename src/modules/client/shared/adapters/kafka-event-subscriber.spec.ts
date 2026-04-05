@@ -28,8 +28,8 @@
  *
  */
 
-import { describe, expect, it, jest } from '@jest/globals';
 import { KafkaEventSubscriber } from './kafka-event-subscriber';
+import { describe, expect, it, jest } from '@jest/globals';
 import { EVENT_TOPICS } from '../../events/event-registry';
 
 describe('KafkaEventSubscriber', () => {

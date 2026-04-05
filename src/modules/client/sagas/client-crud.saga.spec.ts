@@ -28,8 +28,8 @@
  *
  */
 
-import { describe, expect, it, jest } from '@jest/globals';
 import { of, lastValueFrom } from 'rxjs';
+import { describe, expect, it, jest } from '@jest/globals';
 import { ClientCrudSaga } from './client-crud.saga';
 import { ClientCreatedEvent } from '../events/clientcreated.event';
 
