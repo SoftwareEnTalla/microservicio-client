@@ -32,13 +32,16 @@
 import { Module, OnModuleInit, Logger } from "@nestjs/common";
 import { CqrsModule } from "@nestjs/cqrs";
 import { KafkaService } from "../shared/messaging/kafka.service";
+import { KafkaAdminService } from "../shared/messaging/kafka-admin.service";
 import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
 import { KafkaEventSubscriber } from "../shared/adapters/kafka-event-subscriber";
+import { EVENT_TOPICS } from "../events/event-registry";
 
 @Module({
   imports: [CqrsModule],
   providers: [
     KafkaService,
+    KafkaAdminService,
     KafkaEventPublisher,
     KafkaEventSubscriber,
     {
@@ -46,14 +49,15 @@ import { KafkaEventSubscriber } from "../shared/adapters/kafka-event-subscriber"
       useExisting: KafkaEventPublisher,
     },
   ],
-  exports: [KafkaService, KafkaEventPublisher, KafkaEventSubscriber],
+  exports: [KafkaService, KafkaAdminService, KafkaEventPublisher, KafkaEventSubscriber],
 })
 export class KafkaModule implements OnModuleInit {
   private readonly logger = new Logger(KafkaModule.name);
 
   constructor(
     private readonly kafkaSubscriber: KafkaEventSubscriber,
-    private readonly kafkaService: KafkaService
+    private readonly kafkaService: KafkaService,
+    private readonly kafkaAdminService: KafkaAdminService
   ) {}
 
   async onModuleInit() {
@@ -67,6 +71,11 @@ export class KafkaModule implements OnModuleInit {
       // 1. Conectar a Kafka primero
       await this.kafkaService.connect();
       this.logger.log("Successfully connected to Kafka");
+
+      // 1.1 Crear tópicos registrados para CQRS/eventos
+      for (const topic of EVENT_TOPICS) {
+        await this.kafkaAdminService.createTopicIfNotExists(topic);
+      }
 
       // 2. Inicializar el suscriptor de eventos
       await this.kafkaSubscriber.onModuleInit();
