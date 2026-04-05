@@ -87,12 +87,7 @@ export class KafkaModule implements OnModuleInit {
       this.logger.log("Kafka module initialized successfully");
     } catch (error: any) {
       this.logger.error("Failed to initialize Kafka module", error.stack);
-
-      // Implementar estrategia de reintento si es necesario
-      await this.handleInitializationError(error);
-
-      // Relanzar el error para que NestJS lo maneje
-      throw error;
+      this.scheduleKafkaRecovery(1);
     }
   }
 
@@ -112,27 +107,28 @@ export class KafkaModule implements OnModuleInit {
     }
   }
 
-  private async handleInitializationError(error: any): Promise<void> {
-    const maxRetries = 3;
-    const retryDelay = 5000; // 5 segundos
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      this.logger.warn(
-        `Retrying Kafka initialization (attempt ${attempt}/${maxRetries})...`
-      );
-
-      try {
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        await this.kafkaService.connect();
-        await this.kafkaSubscriber.onModuleInit();
-        this.logger.log("Kafka module recovered after retry");
-        return;
-      } catch (retryError: any) {
-        this.logger.warn(`Retry attempt ${attempt} failed`, retryError.message);
-      }
+  private scheduleKafkaRecovery(attempt: number, maxRetries: number = 10): void {
+    const retryDelay = 5000;
+    if (attempt > maxRetries) {
+      this.logger.error();
+      return;
     }
 
-    this.logger.error(`All ${maxRetries} initialization retries failed`);
+    setTimeout(async () => {
+      this.logger.warn();
+      try {
+        await this.kafkaService.connect();
+        for (const topic of EVENT_TOPICS) {
+          await this.kafkaAdminService.createTopicIfNotExists(topic);
+        }
+        await this.kafkaSubscriber.onModuleInit();
+        await this.verifyKafkaConnection();
+        this.logger.log("Kafka module recovered after retry");
+      } catch (retryError: any) {
+        this.logger.warn(, retryError.message);
+        this.scheduleKafkaRecovery(attempt + 1, maxRetries);
+      }
+    }, retryDelay);
   }
 }
 
