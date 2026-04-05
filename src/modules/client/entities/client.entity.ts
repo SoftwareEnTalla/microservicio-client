@@ -166,7 +166,7 @@ export class Client extends BaseEntity {
   protected executeDslLifecycle(): void {
     // Rule: credit-limit-must-be-non-negative
     // El límite de crédito debe ser mayor o igual a 0
-    if (!(this.creditLimit >= 0)) {
+    if (!((this.creditLimit === undefined || this.creditLimit === null || this.creditLimit >= 0))) {
       throw new Error('CLIENT_001: El límite de crédito no puede ser negativo');
     }
 
