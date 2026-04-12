@@ -59,6 +59,7 @@ pnpm-lock.yaml
 venv/
 env/
 ENV/
+.env
 .env.local
 
 # Temporary build artifacts
