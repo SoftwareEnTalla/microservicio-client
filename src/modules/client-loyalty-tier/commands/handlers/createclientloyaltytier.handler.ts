@@ -31,38 +31,16 @@
 
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { CreateClientLoyaltyTierCommand } from "../createclientloyaltytier.command";
-import { KafkaEventPublisher } from "../../shared/adapters/kafka-event-publisher";
-import { KafkaEventSubscriber } from "../../shared/adapters/kafka-event-subscriber";
-import { EventStoreService } from "../../shared/event-store/event-store.service";
-import { ClientLoyaltyTierCreatedEvent } from "../../events/clientloyaltytiercreated.event";
-import { v4 as uuidv4 } from "uuid";
+import { ClientLoyaltyTierCommandService } from "../../services/clientloyaltytiercommand.service";
 
 @CommandHandler(CreateClientLoyaltyTierCommand)
 export class CreateClientLoyaltyTierHandler
   implements ICommandHandler<CreateClientLoyaltyTierCommand>
 {
   constructor(
-    private readonly eventPublisher: KafkaEventPublisher,
-    private readonly eventSubscriber: KafkaEventSubscriber,
-    private readonly eventStore: EventStoreService
+    private readonly commandService: ClientLoyaltyTierCommandService
   ) {}
   async execute(command: CreateClientLoyaltyTierCommand) {
-    command.id = command.id || uuidv4(); // Generar ID si no existe
-    // Implementar lógica del comando
-    const event = new ClientLoyaltyTierCreatedEvent(command.id, command.metadata || command.metadata || {
-        instance: {},
-        metadata: {
-          initiatedBy: 'system',
-          correlationId: command.id,
-        },
-      });
-
-    // 1. Persistir en event store
-    await this.eventStore.appendEvent("clientloyaltytier", event);
-
-    // 2. Publicar a Kafka (y por tanto a otros microservicios)
-    await this.eventPublisher.publish(event);
-
-    return event;
+    return await this.commandService.create(command.payload);
   }
 }

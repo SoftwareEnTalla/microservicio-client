@@ -42,8 +42,17 @@ import { ClientLoyaltyTierAuthGuard } from "../guards/clientloyaltytierauthguard
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ClientLoyaltyTier } from "../entities/client-loyalty-tier.entity";
 import { BaseEntity } from "../entities/base.entity";
-import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { CacheModule } from "@nestjs/cache-manager";
+import { CqrsModule } from "@nestjs/cqrs";
+import { KafkaModule } from "./kafka.module";
+import { CreateClientLoyaltyTierHandler } from "../commands/handlers/createclientloyaltytier.handler";
+import { UpdateClientLoyaltyTierHandler } from "../commands/handlers/updateclientloyaltytier.handler";
+import { DeleteClientLoyaltyTierHandler } from "../commands/handlers/deleteclientloyaltytier.handler";
+import { GetClientLoyaltyTierByIdHandler } from "../queries/handlers/getclientloyaltytierbyid.handler";
+import { GetClientLoyaltyTierByFieldHandler } from "../queries/handlers/getclientloyaltytierbyfield.handler";
+import { GetAllClientLoyaltyTierHandler } from "../queries/handlers/getallclientloyaltytier.handler";
+import { ClientLoyaltyTierCrudSaga } from "../sagas/clientloyaltytier-crud.saga";
+import { EVENT_TOPICS } from "../events/event-registry";
 
 //Interceptors
 import { ClientLoyaltyTierInterceptor } from "../interceptors/clientloyaltytier.interceptor";
@@ -51,11 +60,11 @@ import { ClientLoyaltyTierLoggingInterceptor } from "../interceptors/clientloyal
 
 //Event-Sourcing dependencies
 import { EventStoreService } from "../shared/event-store/event-store.service";
-import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
-import { KafkaService } from "../shared/messaging/kafka.service";
 
 @Module({
   imports: [
+    CqrsModule,
+    KafkaModule,
     TypeOrmModule.forFeature([BaseEntity, ClientLoyaltyTier]), // Incluir BaseEntity para herencia
     CacheModule.register(), // Importa el módulo de caché
   ],
@@ -63,7 +72,6 @@ import { KafkaService } from "../shared/messaging/kafka.service";
   providers: [
     //Services
     EventStoreService,
-    KafkaService,
     ClientLoyaltyTierQueryService,
     ClientLoyaltyTierCommandService,
     //Repositories
@@ -77,29 +85,32 @@ import { KafkaService } from "../shared/messaging/kafka.service";
     //Interceptors
     ClientLoyaltyTierInterceptor,
     ClientLoyaltyTierLoggingInterceptor,
-    //Publishers
-    KafkaEventPublisher,
+    //CQRS Handlers
+    CreateClientLoyaltyTierHandler,
+    UpdateClientLoyaltyTierHandler,
+    DeleteClientLoyaltyTierHandler,
+    GetClientLoyaltyTierByIdHandler,
+    GetClientLoyaltyTierByFieldHandler,
+    GetAllClientLoyaltyTierHandler,
+    ClientLoyaltyTierCrudSaga,
     //Configurations
     {
       provide: 'EVENT_SOURCING_CONFIG',
       useFactory: () => ({
-        enabled: process.env.EVENT_SOURCING_ENABLED === 'true',
-        kafkaEnabled: process.env.KAFKA_ENABLED === 'true',
+        enabled: process.env.EVENT_SOURCING_ENABLED !== 'false',
+        kafkaEnabled: process.env.KAFKA_ENABLED !== 'false',
         eventStoreEnabled: process.env.EVENT_STORE_ENABLED === 'true',
         publishEvents: true,
         useProjections: true,
-        topics: ['clientloyaltytier-events']
+        topics: EVENT_TOPICS
       })
     },
-    //Others dependencies
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
   ],
   exports: [
+    CqrsModule,
+    KafkaModule,
     //Services
     EventStoreService,
-    KafkaService,
     ClientLoyaltyTierQueryService,
     ClientLoyaltyTierCommandService,
     //Repositories
@@ -113,12 +124,6 @@ import { KafkaService } from "../shared/messaging/kafka.service";
     //Interceptors
     ClientLoyaltyTierInterceptor,
     ClientLoyaltyTierLoggingInterceptor,
-    //Publishers
-    KafkaEventPublisher,
-    //Others dependencies
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
   ],
 })
 export class ClientLoyaltyTierModule {}

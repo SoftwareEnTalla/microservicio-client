@@ -31,10 +31,13 @@
 
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { GetAllClientLoyaltyTierQuery } from '../getallclientloyaltytier.query';
+import { ClientLoyaltyTierQueryService } from '../../services/clientloyaltytierquery.service';
 
 @QueryHandler(GetAllClientLoyaltyTierQuery)
 export class GetAllClientLoyaltyTierHandler implements IQueryHandler<GetAllClientLoyaltyTierQuery> {
+  constructor(private readonly queryService: ClientLoyaltyTierQueryService) {}
+
   async execute(query: GetAllClientLoyaltyTierQuery) {
-    // Implementar lógica de la query
+    return this.queryService.findAll(query.filters);
   }
 }

@@ -28,16 +28,20 @@
  *
  */
 
+import { of, lastValueFrom } from 'rxjs';
+import { describe, expect, it, jest } from '@jest/globals';
+import { ClientLoyaltyTierCrudSaga } from './client-loyalty-tier-crud.saga';
+import { ClientLoyaltyTierCreatedEvent } from '../events/clientloyaltytiercreated.event';
 
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetClientLoyaltyTierByIdQuery } from '../getclientloyaltytierbyid.query';
-import { ClientLoyaltyTierQueryService } from '../../services/clientloyaltytierquery.service';
+describe('ClientLoyaltyTierCrudSaga', () => {
+  it('reacciona al evento de creación sin romper el flujo CQRS', async () => {
+    const saga = new ClientLoyaltyTierCrudSaga({ execute: jest.fn() } as any, { publish: jest.fn() } as any);
+    const event = new ClientLoyaltyTierCreatedEvent('agg-1', {
+      instance: { id: 'agg-1' } as any,
+      metadata: { initiatedBy: 'test', correlationId: 'agg-1' },
+    });
 
-@QueryHandler(GetClientLoyaltyTierByIdQuery)
-export class GetClientLoyaltyTierByIdHandler implements IQueryHandler<GetClientLoyaltyTierByIdQuery> {
-  constructor(private readonly queryService: ClientLoyaltyTierQueryService) {}
-
-  async execute(query: GetClientLoyaltyTierByIdQuery) {
-    return this.queryService.findOne({ where: { id: query.filters?.id } });
-  }
-}
+    const result = await lastValueFrom(saga.onClientLoyaltyTierCreated(of(event)));
+    expect(result).toBeNull();
+  });
+});

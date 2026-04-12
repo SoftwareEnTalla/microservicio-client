@@ -28,16 +28,19 @@
  *
  */
 
+import { describe, expect, it } from '@jest/globals';
+import { EventIdempotencyService } from './event-idempotency.service';
 
-import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetClientLoyaltyTierByIdQuery } from '../getclientloyaltytierbyid.query';
-import { ClientLoyaltyTierQueryService } from '../../services/clientloyaltytierquery.service';
+describe('EventIdempotencyService', () => {
+  it('marca un evento como procesado y evita duplicados', () => {
+    const service = new EventIdempotencyService();
+    const key = service.buildKey('client-loyalty-tier-created', 'aggregate-1', { eventId: 'evt-1' });
 
-@QueryHandler(GetClientLoyaltyTierByIdQuery)
-export class GetClientLoyaltyTierByIdHandler implements IQueryHandler<GetClientLoyaltyTierByIdQuery> {
-  constructor(private readonly queryService: ClientLoyaltyTierQueryService) {}
-
-  async execute(query: GetClientLoyaltyTierByIdQuery) {
-    return this.queryService.findOne({ where: { id: query.filters?.id } });
-  }
-}
+    expect(service.hasProcessed(key)).toBe(false);
+    service.markProcessed(key);
+    expect(service.hasProcessed(key)).toBe(true);
+    service.release(key);
+    expect(service.hasProcessed(key)).toBe(false);
+    service.onModuleDestroy();
+  });
+});

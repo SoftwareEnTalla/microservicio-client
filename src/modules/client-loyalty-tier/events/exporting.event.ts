@@ -30,5 +30,7 @@
 export * from "./clientloyaltytierdeleted.event"; 
 export * from "./clientloyaltytiercreated.event";
 export * from "./clientloyaltytierupdated.event";
+
+export * from "./event-registry";
 export * from "./base.event";
 export * from "./clientloyaltytier-failed.event";

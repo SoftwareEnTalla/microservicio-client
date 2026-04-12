@@ -49,10 +49,11 @@ import { LoggerClient } from 'src/common/logger/logger.client';
 import { logger } from '@core/logs/logger';
 
 //Events and EventHandlers
-import { IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import { ClientLoyaltyTierCreatedEvent } from '../events/clientloyaltytiercreated.event';
 import { ClientLoyaltyTierUpdatedEvent } from '../events/clientloyaltytierupdated.event';
 import { ClientLoyaltyTierDeletedEvent } from '../events/clientloyaltytierdeleted.event';
+
 
 //Enfoque Event Sourcing
 import { CommandBus } from '@nestjs/cqrs';
@@ -65,6 +66,7 @@ import { EventSourcingHelper } from '../shared/decorators/event-sourcing.helper'
 import { EventSourcingConfigOptions } from '../shared/decorators/event-sourcing.decorator';
 
 
+@EventsHandler(ClientLoyaltyTierCreatedEvent, ClientLoyaltyTierUpdatedEvent, ClientLoyaltyTierDeletedEvent)
 @Injectable()
 export class ClientLoyaltyTierCommandRepository implements IEventHandler<BaseEvent>{
 
@@ -155,6 +157,7 @@ export class ClientLoyaltyTierCommandRepository implements IEventHandler<BaseEve
         return await this.onClientLoyaltyTierUpdated(event);
       case 'ClientLoyaltyTierDeletedEvent':
         return await this.onClientLoyaltyTierDeleted(event);
+
     }
     return false;
   }
@@ -247,6 +250,7 @@ export class ClientLoyaltyTierCommandRepository implements IEventHandler<BaseEve
     logger.info('Ready to handle onClientLoyaltyTierDeleted event on repository:', event);
     return await this.repository.delete(event.aggregateId);
   }
+
 
 
   // ----------------------------

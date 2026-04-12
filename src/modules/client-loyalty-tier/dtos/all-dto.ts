@@ -29,6 +29,7 @@
  */
 
 import { InputType, Field, Float, Int, ObjectType } from '@nestjs/graphql';
+import GraphQLJSON from 'graphql-type-json';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
@@ -144,7 +145,7 @@ export class BaseClientLoyaltyTierDto {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Beneficios asociados al nivel', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Beneficios asociados al nivel', nullable: true })
   benefits?: Record<string, any> = {};
 
   @ApiProperty({
@@ -154,7 +155,7 @@ export class BaseClientLoyaltyTierDto {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Configuración adicional', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Configuración adicional', nullable: true })
   metadata?: Record<string, any> = {};
 
   // Constructor

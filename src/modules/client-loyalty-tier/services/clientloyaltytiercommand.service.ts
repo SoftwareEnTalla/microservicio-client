@@ -50,6 +50,8 @@ import { EventStoreService } from "../shared/event-store/event-store.service";
 import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
 import { ModuleRef } from "@nestjs/core";
 import { ClientLoyaltyTierQueryService } from "./clientloyaltytierquery.service";
+import { BaseEvent } from "../events/base.event";
+
 
 @Injectable()
 export class ClientLoyaltyTierCommandService implements OnModuleInit {
@@ -90,6 +92,51 @@ export class ClientLoyaltyTierCommandService implements OnModuleInit {
     //Se ejecuta en la inicialización del módulo
   }
 
+  private dslValue(entityData: Record<string, any>, currentData: Record<string, any>, inputData: Record<string, any>, field: string): any {
+    return entityData?.[field] ?? currentData?.[field] ?? inputData?.[field];
+  }
+
+  private async publishDslDomainEvents(events: BaseEvent[]): Promise<void> {
+    for (const event of events) {
+      await this.eventPublisher.publish(event as any);
+      if (process.env.EVENT_STORE_ENABLED === "true") {
+        await this.eventStore.appendEvent('client-loyalty-tier-' + event.aggregateId, event);
+      }
+    }
+  }
+
+  private async applyDslServiceRules(
+    operation: "create" | "update" | "delete",
+    inputData: Record<string, any>,
+    entity?: ClientLoyaltyTier | null,
+    current?: ClientLoyaltyTier | null,
+    publishEvents: boolean = true,
+  ): Promise<void> {
+    const entityData = ((entity ?? {}) as Record<string, any>);
+    const currentData = ((current ?? {}) as Record<string, any>);
+    const pendingEvents: BaseEvent[] = [];
+    if (operation === 'create') {
+      // Regla de servicio: loyalty-tier-min-points-non-negative
+      // Los puntos mínimos deben ser mayores o iguales a 0
+      if (!((this.dslValue(entityData, currentData, inputData, 'minPoints') === undefined || this.dslValue(entityData, currentData, inputData, 'minPoints') === null || this.dslValue(entityData, currentData, inputData, 'minPoints') >= 0))) {
+        throw new Error('CLIENT_TIER_001: Los puntos mínimos del nivel no pueden ser negativos');
+      }
+
+    }
+
+    if (operation === 'update') {
+      // Regla de servicio: loyalty-tier-min-points-non-negative
+      // Los puntos mínimos deben ser mayores o iguales a 0
+      if (!((this.dslValue(entityData, currentData, inputData, 'minPoints') === undefined || this.dslValue(entityData, currentData, inputData, 'minPoints') === null || this.dslValue(entityData, currentData, inputData, 'minPoints') >= 0))) {
+        throw new Error('CLIENT_TIER_001: Los puntos mínimos del nivel no pueden ser negativos');
+      }
+
+    }
+    if (publishEvents) {
+      await this.publishDslDomainEvents(pendingEvents);
+    }
+  }
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
@@ -118,9 +165,10 @@ export class ClientLoyaltyTierCommandService implements OnModuleInit {
   ): Promise<ClientLoyaltyTierResponse<ClientLoyaltyTier>> {
     try {
       logger.info("Receiving in service:", createClientLoyaltyTierDtoInput);
-      const entity = await this.repository.create(
-        ClientLoyaltyTier.fromDto(createClientLoyaltyTierDtoInput)
-      );
+      const candidate = ClientLoyaltyTier.fromDto(createClientLoyaltyTierDtoInput);
+      await this.applyDslServiceRules("create", createClientLoyaltyTierDtoInput as Record<string, any>, candidate, null, false);
+      const entity = await this.repository.create(candidate);
+      await this.applyDslServiceRules("create", createClientLoyaltyTierDtoInput as Record<string, any>, entity, null, true);
       logger.info("Entity created on service:", entity);
       // Respuesta si el clientloyaltytier no existe
       if (!entity)
@@ -219,10 +267,14 @@ export class ClientLoyaltyTierCommandService implements OnModuleInit {
     partialEntity: UpdateClientLoyaltyTierDto
   ): Promise<ClientLoyaltyTierResponse<ClientLoyaltyTier>> {
     try {
+      const currentEntity = await this.queryRepository.findById(id);
+      const candidate = Object.assign(new ClientLoyaltyTier(), currentEntity ?? {}, partialEntity);
+      await this.applyDslServiceRules("update", partialEntity as Record<string, any>, candidate, currentEntity, false);
       const entity = await this.repository.update(
         id,
-        ClientLoyaltyTier.fromDto(partialEntity)
+        candidate
       );
+      await this.applyDslServiceRules("update", partialEntity as Record<string, any>, entity, currentEntity, true);
       // Respuesta si el clientloyaltytier no existe
       if (!entity)
         throw new NotFoundException("Entidades ClientLoyaltyTiers no encontradas.");
@@ -319,7 +371,10 @@ export class ClientLoyaltyTierCommandService implements OnModuleInit {
       if (!entity)
         throw new NotFoundException("Instancias de ClientLoyaltyTier no encontradas.");
 
+      await this.applyDslServiceRules("delete", { id }, entity, entity, false);
+
       const result = await this.repository.delete(id);
+      await this.applyDslServiceRules("delete", { id }, entity, entity, true);
       // Devolver clientloyaltytier
       return {
         ok: true,

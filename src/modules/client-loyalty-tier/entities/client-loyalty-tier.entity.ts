@@ -28,15 +28,18 @@
  *
  */
 
-import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne } from 'typeorm';
+import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne, OneToMany, ManyToMany, JoinTable, Index, Check, Unique } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { CreateClientLoyaltyTierDto, UpdateClientLoyaltyTierDto, DeleteClientLoyaltyTierDto } from '../dtos/all-dto';
 import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
+import GraphQLJSON from 'graphql-type-json';
 import { plainToInstance } from 'class-transformer';
 
 
+@Index('idx_client_loyalty_tier_code', ['code'], { unique: true })
+@Check('chk_client_loyalty_tier_min_points_non_negative', '"minPoints" >= 0')
 @ChildEntity('clientloyaltytier')
 @ObjectType()
 export class ClientLoyaltyTier extends BaseEntity {
@@ -101,7 +104,7 @@ export class ClientLoyaltyTier extends BaseEntity {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Beneficios asociados al nivel', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Beneficios asociados al nivel', nullable: true })
   @Column({ type: 'json', nullable: true, comment: 'Beneficios asociados al nivel' })
   benefits?: Record<string, any> = {};
 
@@ -112,9 +115,17 @@ export class ClientLoyaltyTier extends BaseEntity {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Configuración adicional', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Configuración adicional', nullable: true })
   @Column({ type: 'json', nullable: true, comment: 'Configuración adicional' })
   metadata?: Record<string, any> = {};
+
+  protected executeDslLifecycle(): void {
+    // Rule: loyalty-tier-min-points-non-negative
+    // Los puntos mínimos deben ser mayores o iguales a 0
+    if (!((this.minPoints === undefined || this.minPoints === null || this.minPoints >= 0))) {
+      throw new Error('CLIENT_TIER_001: Los puntos mínimos del nivel no pueden ser negativos');
+    }
+  }
 
   // Relación con BaseEntity (opcional, si aplica)
   // @OneToOne(() => BaseEntity, { cascade: true })
@@ -140,11 +151,13 @@ export class ClientLoyaltyTier extends BaseEntity {
   // Métodos abstractos implementados
   async create(data: any): Promise<BaseEntity> {
     Object.assign(this, data);
+    this.executeDslLifecycle();
     this.modificationDate = new Date();
     return this;
   }
   async update(data: any): Promise<BaseEntity> {
     Object.assign(this, data);
+    this.executeDslLifecycle();
     this.modificationDate = new Date();
     return this;
   }
