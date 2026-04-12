@@ -124,7 +124,7 @@ export class ClientCommandService implements OnModuleInit {
 
       // Regla de servicio: active-client-requires-email
       // Si el cliente se activa debe existir correo principal
-      if (!(this.dslValue(entityData, currentData, inputData, 'isActive') === true && (this.dslValue(entityData, currentData, inputData, 'email') !== undefined && this.dslValue(entityData, currentData, inputData, 'email') !== null && this.dslValue(entityData, currentData, inputData, 'email') !== ''))) {
+      if (!(this.dslValue(entityData, currentData, inputData, 'isActive') === true && !(this.dslValue(entityData, currentData, inputData, 'email') === undefined || this.dslValue(entityData, currentData, inputData, 'email') === null || (typeof this.dslValue(entityData, currentData, inputData, 'email') === 'string' && String(this.dslValue(entityData, currentData, inputData, 'email')).trim() === '') || (Array.isArray(this.dslValue(entityData, currentData, inputData, 'email')) && this.dslValue(entityData, currentData, inputData, 'email').length === 0) || (typeof this.dslValue(entityData, currentData, inputData, 'email') === 'object' && !Array.isArray(this.dslValue(entityData, currentData, inputData, 'email')) && Object.prototype.toString.call(this.dslValue(entityData, currentData, inputData, 'email')) === '[object Object]' && Object.keys(Object(this.dslValue(entityData, currentData, inputData, 'email'))).length === 0)))) {
         logger.warn('CLIENT_002: Se recomienda definir correo principal para clientes activos');
       }
 
@@ -150,7 +150,7 @@ export class ClientCommandService implements OnModuleInit {
 
       // Regla de servicio: active-client-requires-email
       // Si el cliente se activa debe existir correo principal
-      if (!(this.dslValue(entityData, currentData, inputData, 'isActive') === true && (this.dslValue(entityData, currentData, inputData, 'email') !== undefined && this.dslValue(entityData, currentData, inputData, 'email') !== null && this.dslValue(entityData, currentData, inputData, 'email') !== ''))) {
+      if (!(this.dslValue(entityData, currentData, inputData, 'isActive') === true && !(this.dslValue(entityData, currentData, inputData, 'email') === undefined || this.dslValue(entityData, currentData, inputData, 'email') === null || (typeof this.dslValue(entityData, currentData, inputData, 'email') === 'string' && String(this.dslValue(entityData, currentData, inputData, 'email')).trim() === '') || (Array.isArray(this.dslValue(entityData, currentData, inputData, 'email')) && this.dslValue(entityData, currentData, inputData, 'email').length === 0) || (typeof this.dslValue(entityData, currentData, inputData, 'email') === 'object' && !Array.isArray(this.dslValue(entityData, currentData, inputData, 'email')) && Object.prototype.toString.call(this.dslValue(entityData, currentData, inputData, 'email')) === '[object Object]' && Object.keys(Object(this.dslValue(entityData, currentData, inputData, 'email'))).length === 0)))) {
         logger.warn('CLIENT_002: Se recomienda definir correo principal para clientes activos');
       }
 

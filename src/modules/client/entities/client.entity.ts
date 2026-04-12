@@ -34,6 +34,7 @@ import { CreateClientDto, UpdateClientDto, DeleteClientDto } from '../dtos/all-d
 import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
+import GraphQLJSON from 'graphql-type-json';
 import { plainToInstance } from 'class-transformer';
 import { ClientType } from '../../client-type/entities/client-type.entity';
 import { ClientSegment } from '../../client-segment/entities/client-segment.entity';
@@ -172,13 +173,9 @@ export class Client extends BaseEntity {
 
     // Rule: active-client-requires-email
     // Si el cliente se activa debe existir correo principal
-    if (!(this.isActive === true && (this.email !== undefined && this.email !== null && this.email !== ''))) {
+    if (!(this.isActive === true && !(this.email === undefined || this.email === null || (typeof this.email === 'string' && String(this.email).trim() === '') || (Array.isArray(this.email) && this.email.length === 0) || (typeof this.email === 'object' && !Array.isArray(this.email) && Object.prototype.toString.call(this.email) === '[object Object]' && Object.keys(Object(this.email)).length === 0)))) {
       console.warn('CLIENT_002: Se recomienda definir correo principal para clientes activos');
     }
-
-    // Rule: high-credit-limit-emits-domain-event
-    // Cuando el límite de crédito sea alto se debe emitir un evento de dominio
-    // TODO DSL emit-event: ClientHighCreditLimitDetected
   }
 
   // Relación con BaseEntity (opcional, si aplica)
