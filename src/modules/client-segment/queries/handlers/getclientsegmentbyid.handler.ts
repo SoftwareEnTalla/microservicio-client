@@ -31,10 +31,13 @@
 
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { GetClientSegmentByIdQuery } from '../getclientsegmentbyid.query';
+import { ClientSegmentQueryService } from '../../services/clientsegmentquery.service';
 
 @QueryHandler(GetClientSegmentByIdQuery)
 export class GetClientSegmentByIdHandler implements IQueryHandler<GetClientSegmentByIdQuery> {
+  constructor(private readonly queryService: ClientSegmentQueryService) {}
+
   async execute(query: GetClientSegmentByIdQuery) {
-    // Implementar lógica de la query
+    return this.queryService.findOne({ where: { id: query.filters?.id } });
   }
 }

@@ -50,6 +50,8 @@ import { EventStoreService } from "../shared/event-store/event-store.service";
 import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
 import { ModuleRef } from "@nestjs/core";
 import { ClientSegmentQueryService } from "./clientsegmentquery.service";
+import { BaseEvent } from "../events/base.event";
+
 
 @Injectable()
 export class ClientSegmentCommandService implements OnModuleInit {
@@ -90,6 +92,35 @@ export class ClientSegmentCommandService implements OnModuleInit {
     //Se ejecuta en la inicialización del módulo
   }
 
+  private dslValue(entityData: Record<string, any>, currentData: Record<string, any>, inputData: Record<string, any>, field: string): any {
+    return entityData?.[field] ?? currentData?.[field] ?? inputData?.[field];
+  }
+
+  private async publishDslDomainEvents(events: BaseEvent[]): Promise<void> {
+    for (const event of events) {
+      await this.eventPublisher.publish(event as any);
+      if (process.env.EVENT_STORE_ENABLED === "true") {
+        await this.eventStore.appendEvent('client-segment-' + event.aggregateId, event);
+      }
+    }
+  }
+
+  private async applyDslServiceRules(
+    operation: "create" | "update" | "delete",
+    inputData: Record<string, any>,
+    entity?: ClientSegment | null,
+    current?: ClientSegment | null,
+    publishEvents: boolean = true,
+  ): Promise<void> {
+    const entityData = ((entity ?? {}) as Record<string, any>);
+    const currentData = ((current ?? {}) as Record<string, any>);
+    const pendingEvents: BaseEvent[] = [];
+// No se definieron business-rules target=service.
+    if (publishEvents) {
+      await this.publishDslDomainEvents(pendingEvents);
+    }
+  }
+
   @LogExecutionTime({
     layer: "service",
     callback: async (logData, client) => {
@@ -118,9 +149,10 @@ export class ClientSegmentCommandService implements OnModuleInit {
   ): Promise<ClientSegmentResponse<ClientSegment>> {
     try {
       logger.info("Receiving in service:", createClientSegmentDtoInput);
-      const entity = await this.repository.create(
-        ClientSegment.fromDto(createClientSegmentDtoInput)
-      );
+      const candidate = ClientSegment.fromDto(createClientSegmentDtoInput);
+      await this.applyDslServiceRules("create", createClientSegmentDtoInput as Record<string, any>, candidate, null, false);
+      const entity = await this.repository.create(candidate);
+      await this.applyDslServiceRules("create", createClientSegmentDtoInput as Record<string, any>, entity, null, true);
       logger.info("Entity created on service:", entity);
       // Respuesta si el clientsegment no existe
       if (!entity)
@@ -219,10 +251,14 @@ export class ClientSegmentCommandService implements OnModuleInit {
     partialEntity: UpdateClientSegmentDto
   ): Promise<ClientSegmentResponse<ClientSegment>> {
     try {
+      const currentEntity = await this.queryRepository.findById(id);
+      const candidate = Object.assign(new ClientSegment(), currentEntity ?? {}, partialEntity);
+      await this.applyDslServiceRules("update", partialEntity as Record<string, any>, candidate, currentEntity, false);
       const entity = await this.repository.update(
         id,
-        ClientSegment.fromDto(partialEntity)
+        candidate
       );
+      await this.applyDslServiceRules("update", partialEntity as Record<string, any>, entity, currentEntity, true);
       // Respuesta si el clientsegment no existe
       if (!entity)
         throw new NotFoundException("Entidades ClientSegments no encontradas.");
@@ -319,7 +355,10 @@ export class ClientSegmentCommandService implements OnModuleInit {
       if (!entity)
         throw new NotFoundException("Instancias de ClientSegment no encontradas.");
 
+      await this.applyDslServiceRules("delete", { id }, entity, entity, false);
+
       const result = await this.repository.delete(id);
+      await this.applyDslServiceRules("delete", { id }, entity, entity, true);
       // Devolver clientsegment
       return {
         ok: true,

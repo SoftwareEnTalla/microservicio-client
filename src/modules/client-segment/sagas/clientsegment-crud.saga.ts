@@ -31,11 +31,12 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { Saga, CommandBus, EventBus, ofType } from '@nestjs/cqrs';
-import { Observable, filter, map, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import {
   ClientSegmentCreatedEvent,
   ClientSegmentUpdatedEvent,
-  ClientSegmentDeletedEvent
+  ClientSegmentDeletedEvent,
+
 } from '../events/exporting.event';
 import {
   SagaClientSegmentFailedEvent
@@ -99,6 +100,7 @@ export class ClientSegmentCrudSaga {
       })
     );
   };
+
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {

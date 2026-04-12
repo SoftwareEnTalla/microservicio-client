@@ -28,39 +28,21 @@
  *
  */
 
+import { KafkaEventSubscriber } from './kafka-event-subscriber';
+import { describe, expect, it, jest } from '@jest/globals';
+import { EVENT_CONSUMER_TOPICS } from '../../events/event-registry';
 
-import { IEvent } from '@nestjs/cqrs';
+describe('KafkaEventSubscriber', () => {
+  it('se suscribe a los tópicos registrados', async () => {
+    process.env.KAFKA_ENABLED = 'true';
+    const subscribe = jest.fn(async () => undefined);
+    const connect = jest.fn(async () => undefined);
+    const publish = jest.fn();
+    const subscriber = new KafkaEventSubscriber({ connect, subscribe } as any, { publish } as any, { hasProcessed: () => false, markProcessed: jest.fn(), buildKey: jest.fn(() => 'idempotency-key') } as any, { publish: jest.fn() } as any);
 
-export interface EventMetadata {
-  initiatedBy: string;
-  correlationId: string;
-  causationId?: string;
-  eventId?: string;
-  eventName?: string;
-  eventVersion?: string;
-  sourceService?: string;
-  traceId?: string;
-  retryCount?: number;
-  occurredOn?: string;
-  idempotencyKey?: string;
-  originalTopic?: string;
-  [key: string]: any;
-}
+    await subscriber.initializeSubscriptions();
 
-export abstract class BaseEvent implements IEvent {
-  //Constructor de BaseEvent
-  constructor(
-    public readonly aggregateId: string,
-    public readonly timestamp: Date = new Date()
-  ) {
-    //Aquí coloca implementación escencial no más de BaseEvent
-  }
-}
-export abstract class BaseFailedEvent implements IEvent {
-  constructor(public readonly error:Error,public readonly event:any) {}
-}
-
-export interface PayloadEvent<T = any> {
-  instance: T;
-  metadata: EventMetadata;
-}
+    expect(connect).toHaveBeenCalled();
+    expect(subscribe).toHaveBeenCalledWith(EVENT_CONSUMER_TOPICS, expect.any(Function));
+  });
+});

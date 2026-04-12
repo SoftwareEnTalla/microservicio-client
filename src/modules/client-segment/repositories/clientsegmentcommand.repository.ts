@@ -49,10 +49,11 @@ import { LoggerClient } from 'src/common/logger/logger.client';
 import { logger } from '@core/logs/logger';
 
 //Events and EventHandlers
-import { IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import { ClientSegmentCreatedEvent } from '../events/clientsegmentcreated.event';
 import { ClientSegmentUpdatedEvent } from '../events/clientsegmentupdated.event';
 import { ClientSegmentDeletedEvent } from '../events/clientsegmentdeleted.event';
+
 
 //Enfoque Event Sourcing
 import { CommandBus } from '@nestjs/cqrs';
@@ -65,6 +66,7 @@ import { EventSourcingHelper } from '../shared/decorators/event-sourcing.helper'
 import { EventSourcingConfigOptions } from '../shared/decorators/event-sourcing.decorator';
 
 
+@EventsHandler(ClientSegmentCreatedEvent, ClientSegmentUpdatedEvent, ClientSegmentDeletedEvent)
 @Injectable()
 export class ClientSegmentCommandRepository implements IEventHandler<BaseEvent>{
 
@@ -155,6 +157,7 @@ export class ClientSegmentCommandRepository implements IEventHandler<BaseEvent>{
         return await this.onClientSegmentUpdated(event);
       case 'ClientSegmentDeletedEvent':
         return await this.onClientSegmentDeleted(event);
+
     }
     return false;
   }
@@ -247,6 +250,7 @@ export class ClientSegmentCommandRepository implements IEventHandler<BaseEvent>{
     logger.info('Ready to handle onClientSegmentDeleted event on repository:', event);
     return await this.repository.delete(event.aggregateId);
   }
+
 
 
   // ----------------------------

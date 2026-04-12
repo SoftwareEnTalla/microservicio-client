@@ -42,8 +42,17 @@ import { ClientSegmentAuthGuard } from "../guards/clientsegmentauthguard.guard";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ClientSegment } from "../entities/client-segment.entity";
 import { BaseEntity } from "../entities/base.entity";
-import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { CacheModule } from "@nestjs/cache-manager";
+import { CqrsModule } from "@nestjs/cqrs";
+import { KafkaModule } from "./kafka.module";
+import { CreateClientSegmentHandler } from "../commands/handlers/createclientsegment.handler";
+import { UpdateClientSegmentHandler } from "../commands/handlers/updateclientsegment.handler";
+import { DeleteClientSegmentHandler } from "../commands/handlers/deleteclientsegment.handler";
+import { GetClientSegmentByIdHandler } from "../queries/handlers/getclientsegmentbyid.handler";
+import { GetClientSegmentByFieldHandler } from "../queries/handlers/getclientsegmentbyfield.handler";
+import { GetAllClientSegmentHandler } from "../queries/handlers/getallclientsegment.handler";
+import { ClientSegmentCrudSaga } from "../sagas/clientsegment-crud.saga";
+import { EVENT_TOPICS } from "../events/event-registry";
 
 //Interceptors
 import { ClientSegmentInterceptor } from "../interceptors/clientsegment.interceptor";
@@ -51,11 +60,11 @@ import { ClientSegmentLoggingInterceptor } from "../interceptors/clientsegment.l
 
 //Event-Sourcing dependencies
 import { EventStoreService } from "../shared/event-store/event-store.service";
-import { KafkaEventPublisher } from "../shared/adapters/kafka-event-publisher";
-import { KafkaService } from "../shared/messaging/kafka.service";
 
 @Module({
   imports: [
+    CqrsModule,
+    KafkaModule,
     TypeOrmModule.forFeature([BaseEntity, ClientSegment]), // Incluir BaseEntity para herencia
     CacheModule.register(), // Importa el módulo de caché
   ],
@@ -63,7 +72,6 @@ import { KafkaService } from "../shared/messaging/kafka.service";
   providers: [
     //Services
     EventStoreService,
-    KafkaService,
     ClientSegmentQueryService,
     ClientSegmentCommandService,
     //Repositories
@@ -77,29 +85,32 @@ import { KafkaService } from "../shared/messaging/kafka.service";
     //Interceptors
     ClientSegmentInterceptor,
     ClientSegmentLoggingInterceptor,
-    //Publishers
-    KafkaEventPublisher,
+    //CQRS Handlers
+    CreateClientSegmentHandler,
+    UpdateClientSegmentHandler,
+    DeleteClientSegmentHandler,
+    GetClientSegmentByIdHandler,
+    GetClientSegmentByFieldHandler,
+    GetAllClientSegmentHandler,
+    ClientSegmentCrudSaga,
     //Configurations
     {
       provide: 'EVENT_SOURCING_CONFIG',
       useFactory: () => ({
-        enabled: process.env.EVENT_SOURCING_ENABLED === 'true',
-        kafkaEnabled: process.env.KAFKA_ENABLED === 'true',
+        enabled: process.env.EVENT_SOURCING_ENABLED !== 'false',
+        kafkaEnabled: process.env.KAFKA_ENABLED !== 'false',
         eventStoreEnabled: process.env.EVENT_STORE_ENABLED === 'true',
         publishEvents: true,
         useProjections: true,
-        topics: ['clientsegment-events']
+        topics: EVENT_TOPICS
       })
     },
-    //Others dependencies
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
   ],
   exports: [
+    CqrsModule,
+    KafkaModule,
     //Services
     EventStoreService,
-    KafkaService,
     ClientSegmentQueryService,
     ClientSegmentCommandService,
     //Repositories
@@ -113,12 +124,6 @@ import { KafkaService } from "../shared/messaging/kafka.service";
     //Interceptors
     ClientSegmentInterceptor,
     ClientSegmentLoggingInterceptor,
-    //Publishers
-    KafkaEventPublisher,
-    //Others dependencies
-    UnhandledExceptionBus, // Manejador global de excepciones
-    CommandBus, // Bus de comandos
-    EventBus, // Bus de eventos
   ],
 })
 export class ClientSegmentModule {}

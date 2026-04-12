@@ -28,39 +28,20 @@
  *
  */
 
+import { of, lastValueFrom } from 'rxjs';
+import { describe, expect, it, jest } from '@jest/globals';
+import { ClientSegmentCrudSaga } from './client-segment-crud.saga';
+import { ClientSegmentCreatedEvent } from '../events/clientsegmentcreated.event';
 
-import { IEvent } from '@nestjs/cqrs';
+describe('ClientSegmentCrudSaga', () => {
+  it('reacciona al evento de creación sin romper el flujo CQRS', async () => {
+    const saga = new ClientSegmentCrudSaga({ execute: jest.fn() } as any, { publish: jest.fn() } as any);
+    const event = new ClientSegmentCreatedEvent('agg-1', {
+      instance: { id: 'agg-1' } as any,
+      metadata: { initiatedBy: 'test', correlationId: 'agg-1' },
+    });
 
-export interface EventMetadata {
-  initiatedBy: string;
-  correlationId: string;
-  causationId?: string;
-  eventId?: string;
-  eventName?: string;
-  eventVersion?: string;
-  sourceService?: string;
-  traceId?: string;
-  retryCount?: number;
-  occurredOn?: string;
-  idempotencyKey?: string;
-  originalTopic?: string;
-  [key: string]: any;
-}
-
-export abstract class BaseEvent implements IEvent {
-  //Constructor de BaseEvent
-  constructor(
-    public readonly aggregateId: string,
-    public readonly timestamp: Date = new Date()
-  ) {
-    //Aquí coloca implementación escencial no más de BaseEvent
-  }
-}
-export abstract class BaseFailedEvent implements IEvent {
-  constructor(public readonly error:Error,public readonly event:any) {}
-}
-
-export interface PayloadEvent<T = any> {
-  instance: T;
-  metadata: EventMetadata;
-}
+    const result = await lastValueFrom(saga.onClientSegmentCreated(of(event)));
+    expect(result).toBeNull();
+  });
+});

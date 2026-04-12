@@ -28,39 +28,18 @@
  *
  */
 
+import { Injectable, Logger } from '@nestjs/common';
+import { EVENT_TOPICS } from '../../events/event-registry';
+import { KafkaEventSubscriber } from '../adapters/kafka-event-subscriber';
 
-import { IEvent } from '@nestjs/cqrs';
+@Injectable()
+export class ProjectionReplayService {
+  private readonly logger = new Logger(ProjectionReplayService.name);
 
-export interface EventMetadata {
-  initiatedBy: string;
-  correlationId: string;
-  causationId?: string;
-  eventId?: string;
-  eventName?: string;
-  eventVersion?: string;
-  sourceService?: string;
-  traceId?: string;
-  retryCount?: number;
-  occurredOn?: string;
-  idempotencyKey?: string;
-  originalTopic?: string;
-  [key: string]: any;
-}
+  constructor(private readonly kafkaEventSubscriber: KafkaEventSubscriber) {}
 
-export abstract class BaseEvent implements IEvent {
-  //Constructor de BaseEvent
-  constructor(
-    public readonly aggregateId: string,
-    public readonly timestamp: Date = new Date()
-  ) {
-    //Aquí coloca implementación escencial no más de BaseEvent
+  async replayRegisteredEvents(): Promise<void> {
+    this.logger.warn('Iniciando replay de proyecciones para tópicos: ' + EVENT_TOPICS.join(', '));
+    await this.kafkaEventSubscriber.replayRegisteredEvents();
   }
-}
-export abstract class BaseFailedEvent implements IEvent {
-  constructor(public readonly error:Error,public readonly event:any) {}
-}
-
-export interface PayloadEvent<T = any> {
-  instance: T;
-  metadata: EventMetadata;
 }

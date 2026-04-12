@@ -31,10 +31,13 @@
 
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { GetAllClientSegmentQuery } from '../getallclientsegment.query';
+import { ClientSegmentQueryService } from '../../services/clientsegmentquery.service';
 
 @QueryHandler(GetAllClientSegmentQuery)
 export class GetAllClientSegmentHandler implements IQueryHandler<GetAllClientSegmentQuery> {
+  constructor(private readonly queryService: ClientSegmentQueryService) {}
+
   async execute(query: GetAllClientSegmentQuery) {
-    // Implementar lógica de la query
+    return this.queryService.findAll(query.filters);
   }
 }

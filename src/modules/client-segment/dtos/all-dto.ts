@@ -29,6 +29,7 @@
  */
 
 import { InputType, Field, Float, Int, ObjectType } from '@nestjs/graphql';
+import GraphQLJSON from 'graphql-type-json';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
@@ -134,7 +135,7 @@ export class BaseClientSegmentDto {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Configuración adicional del segmento', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Configuración adicional del segmento', nullable: true })
   metadata?: Record<string, any> = {};
 
   // Constructor

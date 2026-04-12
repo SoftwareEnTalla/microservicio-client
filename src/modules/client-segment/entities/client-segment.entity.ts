@@ -28,15 +28,17 @@
  *
  */
 
-import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne } from 'typeorm';
+import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne, OneToMany, ManyToMany, JoinTable, Index, Check, Unique } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { CreateClientSegmentDto, UpdateClientSegmentDto, DeleteClientSegmentDto } from '../dtos/all-dto';
 import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
+import GraphQLJSON from 'graphql-type-json';
 import { plainToInstance } from 'class-transformer';
 
 
+@Index('idx_client_segment_code', ['code'], { unique: true })
 @ChildEntity('clientsegment')
 @ObjectType()
 export class ClientSegment extends BaseEntity {
@@ -90,9 +92,13 @@ export class ClientSegment extends BaseEntity {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Configuración adicional del segmento', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Configuración adicional del segmento', nullable: true })
   @Column({ type: 'json', nullable: true, comment: 'Configuración adicional del segmento' })
   metadata?: Record<string, any> = {};
+
+  protected executeDslLifecycle(): void {
+    // No se definieron business-rules en el DSL.
+  }
 
   // Relación con BaseEntity (opcional, si aplica)
   // @OneToOne(() => BaseEntity, { cascade: true })
@@ -118,11 +124,13 @@ export class ClientSegment extends BaseEntity {
   // Métodos abstractos implementados
   async create(data: any): Promise<BaseEntity> {
     Object.assign(this, data);
+    this.executeDslLifecycle();
     this.modificationDate = new Date();
     return this;
   }
   async update(data: any): Promise<BaseEntity> {
     Object.assign(this, data);
+    this.executeDslLifecycle();
     this.modificationDate = new Date();
     return this;
   }

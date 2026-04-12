@@ -30,5 +30,7 @@
 export * from "./clientsegmentdeleted.event"; 
 export * from "./clientsegmentcreated.event";
 export * from "./clientsegmentupdated.event";
+
+export * from "./event-registry";
 export * from "./base.event";
 export * from "./clientsegment-failed.event";
