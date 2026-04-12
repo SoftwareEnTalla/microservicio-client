@@ -40,6 +40,7 @@ import { AppDataSource, initializeDatabase } from "./data-source";
 import { ClientQueryController } from "./modules/client/controllers/clientquery.controller";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
+import GraphQLJSON from "graphql-type-json";
 import { ClientCommandService } from "./modules/client/services/clientcommand.service";
 import { ClientQueryService } from "./modules/client/services/clientquery.service";
 import { CacheModule } from "@nestjs/cache-manager";
@@ -56,8 +57,6 @@ import { ClientSegmentQueryService } from "./modules/client-segment/services/cli
 import { ClientTypeModule } from "./modules/client-type/modules/clienttype.module";
 import { ClientTypeCommandService } from "./modules/client-type/services/clienttypecommand.service";
 import { ClientTypeQueryService } from "./modules/client-type/services/clienttypequery.service";
-
-//import GraphQLJSON from "graphql-type-json";
 
 /*
 //TODO unused for while dependencies
@@ -138,6 +137,7 @@ import LoggerService, { logger } from "@core/logs/logger";
             buildSchemaOptions: {
               dateScalarMode: "timestamp",
             },
+            resolvers: { JSON: GraphQLJSON },
           }),
         ]
       : []),

@@ -29,6 +29,7 @@
  */
 
 import { InputType, Field, Float, Int, ObjectType } from '@nestjs/graphql';
+import GraphQLJSON from 'graphql-type-json';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
@@ -134,7 +135,7 @@ export class BaseClientTypeDto {
   })
   @IsObject()
   @IsOptional()
-  @Field(() => String, { description: 'Configuración adicional del tipo', nullable: true })
+  @Field(() => GraphQLJSON, { description: 'Configuración adicional del tipo', nullable: true })
   metadata?: Record<string, any> = {};
 
   // Constructor

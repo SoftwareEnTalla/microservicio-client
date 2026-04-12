@@ -31,38 +31,17 @@
 
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { UpdateClientTypeCommand } from "../updateclienttype.command";
-import { KafkaEventPublisher } from "../../shared/adapters/kafka-event-publisher";
-import { KafkaEventSubscriber } from "../../shared/adapters/kafka-event-subscriber";
-import { EventStoreService } from "../../shared/event-store/event-store.service";
-import { ClientTypeCreatedEvent } from "../../events/clienttypecreated.event";
-import { v4 as uuidv4 } from "uuid";
+import { ClientTypeCommandService } from "../../services/clienttypecommand.service";
 
 @CommandHandler(UpdateClientTypeCommand)
 export class UpdateClientTypeHandler
   implements ICommandHandler<UpdateClientTypeCommand>
 {
   constructor(
-    private readonly eventPublisher: KafkaEventPublisher,
-    private readonly eventSubscriber: KafkaEventSubscriber,
-    private readonly eventStore: EventStoreService
+    private readonly commandService: ClientTypeCommandService
   ) {}
   async execute(command: UpdateClientTypeCommand) {
-    command.id = command.id || uuidv4(); // Generar ID si no existe
-    // Implementar lógica del comando
-    const event = new ClientTypeCreatedEvent(command.id, command.metadata || command.metadata || {
-        instance: {},
-        metadata: {
-          initiatedBy: 'system',
-          correlationId: command.id,
-        },
-      });
-
-    // 1. Persistir en event store
-    await this.eventStore.appendEvent("clienttype", event);
-
-    // 2. Publicar a Kafka (y por tanto a otros microservicios)
-    await this.eventPublisher.publish(event);
-
-    return event;
+    const id = String(command.payload?.id ?? command.id ?? '');
+    return await this.commandService.update(id, command.payload);
   }
 }

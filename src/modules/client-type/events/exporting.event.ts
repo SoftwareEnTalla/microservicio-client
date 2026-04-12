@@ -30,5 +30,7 @@
 export * from "./clienttypedeleted.event"; 
 export * from "./clienttypecreated.event";
 export * from "./clienttypeupdated.event";
+
+export * from "./event-registry";
 export * from "./base.event";
 export * from "./clienttype-failed.event";

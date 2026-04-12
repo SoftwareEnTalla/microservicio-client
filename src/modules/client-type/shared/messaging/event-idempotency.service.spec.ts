@@ -28,39 +28,19 @@
  *
  */
 
+import { describe, expect, it } from '@jest/globals';
+import { EventIdempotencyService } from './event-idempotency.service';
 
-import { IEvent } from '@nestjs/cqrs';
+describe('EventIdempotencyService', () => {
+  it('marca un evento como procesado y evita duplicados', () => {
+    const service = new EventIdempotencyService();
+    const key = service.buildKey('client-type-created', 'aggregate-1', { eventId: 'evt-1' });
 
-export interface EventMetadata {
-  initiatedBy: string;
-  correlationId: string;
-  causationId?: string;
-  eventId?: string;
-  eventName?: string;
-  eventVersion?: string;
-  sourceService?: string;
-  traceId?: string;
-  retryCount?: number;
-  occurredOn?: string;
-  idempotencyKey?: string;
-  originalTopic?: string;
-  [key: string]: any;
-}
-
-export abstract class BaseEvent implements IEvent {
-  //Constructor de BaseEvent
-  constructor(
-    public readonly aggregateId: string,
-    public readonly timestamp: Date = new Date()
-  ) {
-    //Aquí coloca implementación escencial no más de BaseEvent
-  }
-}
-export abstract class BaseFailedEvent implements IEvent {
-  constructor(public readonly error:Error,public readonly event:any) {}
-}
-
-export interface PayloadEvent<T = any> {
-  instance: T;
-  metadata: EventMetadata;
-}
+    expect(service.hasProcessed(key)).toBe(false);
+    service.markProcessed(key);
+    expect(service.hasProcessed(key)).toBe(true);
+    service.release(key);
+    expect(service.hasProcessed(key)).toBe(false);
+    service.onModuleDestroy();
+  });
+});

@@ -49,10 +49,11 @@ import { LoggerClient } from 'src/common/logger/logger.client';
 import { logger } from '@core/logs/logger';
 
 //Events and EventHandlers
-import { IEventHandler } from '@nestjs/cqrs';
+import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import { ClientTypeCreatedEvent } from '../events/clienttypecreated.event';
 import { ClientTypeUpdatedEvent } from '../events/clienttypeupdated.event';
 import { ClientTypeDeletedEvent } from '../events/clienttypedeleted.event';
+
 
 //Enfoque Event Sourcing
 import { CommandBus } from '@nestjs/cqrs';
@@ -65,6 +66,7 @@ import { EventSourcingHelper } from '../shared/decorators/event-sourcing.helper'
 import { EventSourcingConfigOptions } from '../shared/decorators/event-sourcing.decorator';
 
 
+@EventsHandler(ClientTypeCreatedEvent, ClientTypeUpdatedEvent, ClientTypeDeletedEvent)
 @Injectable()
 export class ClientTypeCommandRepository implements IEventHandler<BaseEvent>{
 
@@ -155,6 +157,7 @@ export class ClientTypeCommandRepository implements IEventHandler<BaseEvent>{
         return await this.onClientTypeUpdated(event);
       case 'ClientTypeDeletedEvent':
         return await this.onClientTypeDeleted(event);
+
     }
     return false;
   }
@@ -247,6 +250,7 @@ export class ClientTypeCommandRepository implements IEventHandler<BaseEvent>{
     logger.info('Ready to handle onClientTypeDeleted event on repository:', event);
     return await this.repository.delete(event.aggregateId);
   }
+
 
 
   // ----------------------------

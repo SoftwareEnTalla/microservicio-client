@@ -30,9 +30,9 @@
 
 
 import { BaseEvent } from './base.event';
-import { ClientLoyaltyTierCreatedEvent } from './clientloyaltytiercreated.event';
-import { ClientLoyaltyTierUpdatedEvent } from './clientloyaltytierupdated.event';
-import { ClientLoyaltyTierDeletedEvent } from './clientloyaltytierdeleted.event';
+import { ClientTypeCreatedEvent } from './clienttypecreated.event';
+import { ClientTypeUpdatedEvent } from './clienttypeupdated.event';
+import { ClientTypeDeletedEvent } from './clienttypedeleted.event';
 
 export type RegisteredEventClass<T extends BaseEvent = BaseEvent> = new (
   aggregateId: string,
@@ -70,9 +70,9 @@ const EVENT_DEFINITION_OVERRIDES: Partial<Record<string, Partial<Omit<Registered
 };
 
 export const EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
-  'client-loyalty-tier-created': createEventDefinition('client-loyalty-tier-created', ClientLoyaltyTierCreatedEvent, EVENT_DEFINITION_OVERRIDES['client-loyalty-tier-created']),
-  'client-loyalty-tier-updated': createEventDefinition('client-loyalty-tier-updated', ClientLoyaltyTierUpdatedEvent, EVENT_DEFINITION_OVERRIDES['client-loyalty-tier-updated']),
-  'client-loyalty-tier-deleted': createEventDefinition('client-loyalty-tier-deleted', ClientLoyaltyTierDeletedEvent, EVENT_DEFINITION_OVERRIDES['client-loyalty-tier-deleted']),
+  'client-type-created': createEventDefinition('client-type-created', ClientTypeCreatedEvent, EVENT_DEFINITION_OVERRIDES['client-type-created']),
+  'client-type-updated': createEventDefinition('client-type-updated', ClientTypeUpdatedEvent, EVENT_DEFINITION_OVERRIDES['client-type-updated']),
+  'client-type-deleted': createEventDefinition('client-type-deleted', ClientTypeDeletedEvent, EVENT_DEFINITION_OVERRIDES['client-type-deleted']),
 
 };
 

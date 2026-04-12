@@ -28,20 +28,35 @@
  *
  */
 
-import { of, lastValueFrom } from 'rxjs';
+import { KafkaEventPublisher } from './kafka-event-publisher';
 import { describe, expect, it, jest } from '@jest/globals';
-import { ClientSegmentCrudSaga } from './client-segment-crud.saga';
-import { ClientSegmentCreatedEvent } from '../events/clientsegmentcreated.event';
+import { ClientTypeCreatedEvent } from '../../events/clienttypecreated.event';
+import { resolveEventDefinition } from '../../events/event-registry';
 
-describe('ClientSegmentCrudSaga', () => {
-  it('reacciona al evento de creación sin romper el flujo CQRS', async () => {
-    const saga = new ClientSegmentCrudSaga({ execute: jest.fn() } as any, { publish: jest.fn() } as any);
-    const event = new ClientSegmentCreatedEvent('agg-1', {
+describe('KafkaEventPublisher', () => {
+  it('resuelve el tópico a partir del nombre del evento', async () => {
+    process.env.KAFKA_ENABLED = 'true';
+    const sendMessage = jest.fn(async () => undefined);
+    const publisher = new KafkaEventPublisher({ sendMessage } as any);
+    const event = new ClientTypeCreatedEvent('agg-1', {
       instance: { id: 'agg-1' } as any,
       metadata: { initiatedBy: 'test', correlationId: 'agg-1' },
     });
 
-    const result = await lastValueFrom(saga.onClientSegmentCreated(of(event)));
-    expect(result).toBeNull();
+    await publisher.publish(event);
+
+    const eventDefinition = resolveEventDefinition('client-type-created');
+    expect(sendMessage).toHaveBeenCalledWith(
+      'client-type-created',
+      event,
+      expect.objectContaining({
+        key: 'agg-1',
+        headers: expect.objectContaining({
+          'event-version': eventDefinition?.version,
+          'event-id': expect.any(String),
+          'trace-id': 'agg-1',
+        }),
+      }),
+    );
   });
 });
