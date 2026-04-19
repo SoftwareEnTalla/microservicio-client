@@ -47,6 +47,11 @@ import {
   DeleteClientLoyaltyTierCommand
 } from '../commands/exporting.command';
 
+//Logger - Codetrace
+import { LogExecutionTime } from 'src/common/logger/loggers.functions';
+import { LoggerClient } from 'src/common/logger/logger.client';
+import { logger } from '@core/logs/logger';
+
 @Injectable()
 export class ClientLoyaltyTierCrudSaga {
   private readonly logger = new Logger(ClientLoyaltyTierCrudSaga.name);
@@ -63,8 +68,9 @@ export class ClientLoyaltyTierCrudSaga {
       ofType(ClientLoyaltyTierCreatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para creación de ClientLoyaltyTier: ${event.aggregateId}`);
-        // Lógica post-creación (ej: enviar notificación)
+        void this.handleClientLoyaltyTierCreated(event);
       }),
+      map(() => null),
       map(event => {
         // Ejecutar comandos adicionales si es necesario
         return null;
@@ -79,8 +85,9 @@ export class ClientLoyaltyTierCrudSaga {
       ofType(ClientLoyaltyTierUpdatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para actualización de ClientLoyaltyTier: ${event.aggregateId}`);
-        // Lógica post-actualización (ej: actualizar caché)
-      })
+        void this.handleClientLoyaltyTierUpdated(event);
+      }),
+      map(() => null)
     );
   };
 
@@ -91,8 +98,9 @@ export class ClientLoyaltyTierCrudSaga {
       ofType(ClientLoyaltyTierDeletedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para eliminación de ClientLoyaltyTier: ${event.aggregateId}`);
-        // Lógica post-eliminación (ej: limpiar relaciones)
+        void this.handleClientLoyaltyTierDeleted(event);
       }),
+      map(() => null),
       map(event => {
         // Ejemplo: Ejecutar comando de compensación
         // return this.commandBus.execute(new CompensateDeleteCommand(...));
@@ -101,6 +109,78 @@ export class ClientLoyaltyTierCrudSaga {
     );
   };
 
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientLoyaltyTierCrudSaga.name)
+      .get(ClientLoyaltyTierCrudSaga.name),
+  })
+  private async handleClientLoyaltyTierCreated(event: ClientLoyaltyTierCreatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga ClientLoyaltyTier Created completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientLoyaltyTierCrudSaga.name)
+      .get(ClientLoyaltyTierCrudSaga.name),
+  })
+  private async handleClientLoyaltyTierUpdated(event: ClientLoyaltyTierUpdatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga ClientLoyaltyTier Updated completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientLoyaltyTierCrudSaga.name)
+      .get(ClientLoyaltyTierCrudSaga.name),
+  })
+  private async handleClientLoyaltyTierDeleted(event: ClientLoyaltyTierDeletedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga ClientLoyaltyTier Deleted completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {

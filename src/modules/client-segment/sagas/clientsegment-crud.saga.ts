@@ -47,6 +47,11 @@ import {
   DeleteClientSegmentCommand
 } from '../commands/exporting.command';
 
+//Logger - Codetrace
+import { LogExecutionTime } from 'src/common/logger/loggers.functions';
+import { LoggerClient } from 'src/common/logger/logger.client';
+import { logger } from '@core/logs/logger';
+
 @Injectable()
 export class ClientSegmentCrudSaga {
   private readonly logger = new Logger(ClientSegmentCrudSaga.name);
@@ -63,8 +68,9 @@ export class ClientSegmentCrudSaga {
       ofType(ClientSegmentCreatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para creación de ClientSegment: ${event.aggregateId}`);
-        // Lógica post-creación (ej: enviar notificación)
+        void this.handleClientSegmentCreated(event);
       }),
+      map(() => null),
       map(event => {
         // Ejecutar comandos adicionales si es necesario
         return null;
@@ -79,8 +85,9 @@ export class ClientSegmentCrudSaga {
       ofType(ClientSegmentUpdatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para actualización de ClientSegment: ${event.aggregateId}`);
-        // Lógica post-actualización (ej: actualizar caché)
-      })
+        void this.handleClientSegmentUpdated(event);
+      }),
+      map(() => null)
     );
   };
 
@@ -91,8 +98,9 @@ export class ClientSegmentCrudSaga {
       ofType(ClientSegmentDeletedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para eliminación de ClientSegment: ${event.aggregateId}`);
-        // Lógica post-eliminación (ej: limpiar relaciones)
+        void this.handleClientSegmentDeleted(event);
       }),
+      map(() => null),
       map(event => {
         // Ejemplo: Ejecutar comando de compensación
         // return this.commandBus.execute(new CompensateDeleteCommand(...));
@@ -101,6 +109,78 @@ export class ClientSegmentCrudSaga {
     );
   };
 
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientSegmentCrudSaga.name)
+      .get(ClientSegmentCrudSaga.name),
+  })
+  private async handleClientSegmentCreated(event: ClientSegmentCreatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga ClientSegment Created completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientSegmentCrudSaga.name)
+      .get(ClientSegmentCrudSaga.name),
+  })
+  private async handleClientSegmentUpdated(event: ClientSegmentUpdatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga ClientSegment Updated completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientSegmentCrudSaga.name)
+      .get(ClientSegmentCrudSaga.name),
+  })
+  private async handleClientSegmentDeleted(event: ClientSegmentDeletedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga ClientSegment Deleted completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {

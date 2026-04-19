@@ -47,6 +47,11 @@ import {
   DeleteClientCommand
 } from '../commands/exporting.command';
 
+//Logger - Codetrace
+import { LogExecutionTime } from 'src/common/logger/loggers.functions';
+import { LoggerClient } from 'src/common/logger/logger.client';
+import { logger } from '@core/logs/logger';
+
 @Injectable()
 export class ClientCrudSaga {
   private readonly logger = new Logger(ClientCrudSaga.name);
@@ -63,8 +68,9 @@ export class ClientCrudSaga {
       ofType(ClientCreatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para creación de Client: ${event.aggregateId}`);
-        // Lógica post-creación (ej: enviar notificación)
+        void this.handleClientCreated(event);
       }),
+      map(() => null),
       map(event => {
         // Ejecutar comandos adicionales si es necesario
         return null;
@@ -79,8 +85,9 @@ export class ClientCrudSaga {
       ofType(ClientUpdatedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para actualización de Client: ${event.aggregateId}`);
-        // Lógica post-actualización (ej: actualizar caché)
-      })
+        void this.handleClientUpdated(event);
+      }),
+      map(() => null)
     );
   };
 
@@ -91,8 +98,9 @@ export class ClientCrudSaga {
       ofType(ClientDeletedEvent),
       tap(event => {
         this.logger.log(`Saga iniciada para eliminación de Client: ${event.aggregateId}`);
-        // Lógica post-eliminación (ej: limpiar relaciones)
+        void this.handleClientDeleted(event);
       }),
+      map(() => null),
       map(event => {
         // Ejemplo: Ejecutar comando de compensación
         // return this.commandBus.execute(new CompensateDeleteCommand(...));
@@ -111,6 +119,78 @@ export class ClientCrudSaga {
       map(() => null)
     );
   };
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientCrudSaga.name)
+      .get(ClientCrudSaga.name),
+  })
+  private async handleClientCreated(event: ClientCreatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga Client Created completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientCrudSaga.name)
+      .get(ClientCrudSaga.name),
+  })
+  private async handleClientUpdated(event: ClientUpdatedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga Client Updated completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
+
+
+  @LogExecutionTime({
+    layer: 'saga',
+    callback: async (logData, client) => {
+      try {
+        logger.info('Codetrace saga event:', [logData, client]);
+        return await client.send(logData);
+      } catch (error) {
+        logger.info('Error enviando traza de saga:', logData);
+        throw error;
+      }
+    },
+    client: LoggerClient.getInstance()
+      .registerClient(ClientCrudSaga.name)
+      .get(ClientCrudSaga.name),
+  })
+  private async handleClientDeleted(event: ClientDeletedEvent): Promise<void> {
+    try {
+      this.logger.log(`Saga Client Deleted completada: ${event.aggregateId}`);
+    } catch (error: any) {
+      this.handleSagaError(error, event);
+    }
+  }
 
   // Método para manejo de errores en sagas
   private handleSagaError(error: Error, event: any) {
