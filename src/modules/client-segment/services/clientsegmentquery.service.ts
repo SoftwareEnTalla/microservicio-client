@@ -229,13 +229,7 @@ export class ClientSegmentQueryService implements OnModuleInit{
     paginationArgs?: PaginationArgs
   ): Promise<ClientSegmentsResponse<ClientSegment>> {
     try {
-      const [entities, lenght] = await this.repository.findAndCount({
-        where: { [field]: value },
-        skip:
-          ((paginationArgs ? paginationArgs.page : 1) - 1) *
-          (paginationArgs ? paginationArgs.size : 25),
-        take: paginationArgs ? paginationArgs.size : 25,
-      });
+      const [entities, lenght] = await this.repository.findAndCount({ [field]: value });
 
       // Respuesta si el clientsegment no existe
       if (!entities)
@@ -359,9 +353,7 @@ export class ClientSegmentQueryService implements OnModuleInit{
     paginationArgs?: PaginationArgs
   ): Promise<ClientSegmentsResponse<ClientSegment>> {
     try {
-      const [entities, lenght] = await this.repository.findAndCount({
-        where: where,
-      });
+      const [entities, lenght] = await this.repository.findAndCount(where);
 
       // Respuesta si el clientsegment no existe
       if (!entities)
@@ -411,9 +403,7 @@ export class ClientSegmentQueryService implements OnModuleInit{
   })
   async findOne(where?: Record<string, any>): Promise<ClientSegmentResponse<ClientSegment>> {
     try {
-      const entity = await this.repository.findOne({
-        where: where,
-      });
+      const entity = await this.repository.findOne(where);
 
       // Respuesta si el clientsegment no existe
       if (!entity)
@@ -455,9 +445,7 @@ export class ClientSegmentQueryService implements OnModuleInit{
     where?: Record<string, any>
   ): Promise<ClientSegmentResponse<ClientSegment> | Error> {
     try {
-      const entity = await this.repository.findOne({
-        where: where,
-      });
+      const entity = await this.repository.findOne(where);
 
       // Respuesta si el clientsegment no existe
       if (!entity)

@@ -68,6 +68,14 @@ import { HeaderResolver, AcceptLanguageResolver } from "nestjs-i18n";
 import { TranslocoWrapperService } from "./core/services/transloco-wrapper.service";
 import { TranslocoModule } from "@ngneat/transloco";
 import LoggerService, { logger } from "@core/logs/logger";
+import { AuthClientLoyaltyTierModule } from "./modules/client-loyalty-tier/modules/auth.module";
+import { KafkaModule } from "./modules/client-loyalty-tier/modules/kafka.module";
+import { AuthClientSegmentModule } from "./modules/client-segment/modules/auth.module";
+import { KafkaModule } from "./modules/client-segment/modules/kafka.module";
+import { AuthClientModule } from "./modules/client/modules/auth.module";
+import { KafkaModule } from "./modules/client/modules/kafka.module";
+import { AuthClientTypeModule } from "./modules/client-type/modules/auth.module";
+import { KafkaModule } from "./modules/client-type/modules/kafka.module";
 
 */
 
@@ -126,6 +134,14 @@ import LoggerService, { logger } from "@core/logs/logger";
     /**
      * Módulo Logger de la aplicación
      */
+        AuthClientLoyaltyTierModule,
+    KafkaModule,
+    AuthClientSegmentModule,
+    KafkaModule,
+    AuthClientModule,
+    KafkaModule,
+    AuthClientTypeModule,
+    KafkaModule,
     LoggingModule,
 
     // GraphQL solo si GRAPHQL_ENABLED=true

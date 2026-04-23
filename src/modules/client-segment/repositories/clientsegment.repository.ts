@@ -272,15 +272,19 @@ import { logger } from '@core/logs/logger';
       .registerClient(ClientSegmentRepository.name)
       .get(ClientSegmentRepository.name),
     })
-    async findOne(where?: Record<string, any>): Promise<ClientSegment | null> {
-      const tmp: FindOptionsWhere<ClientSegment> = where as FindOptionsWhere<ClientSegment>;
-      logger.info('Ready to findOneBy ClientSegment on repository with conditions:', tmp);
-      // Si 'where' es undefined o null, puedes manejarlo según tu lógica
-      if (!where) {
+        async findOne(options?: Record<string, any>): Promise<ClientSegment | null> {
+      if (!options || Object.keys(options).length === 0) {
         logger.warn('No conditions provided for finding ClientSegment.');
-        return null; // O maneja el caso como prefieras
+        return null;
       }
-      logger.info('Ready to findOneBy ClientSegment on repository:',tmp);
+      // Soporta tanto 'where plano' como FindOneOptions ({ where, relations, order, select })
+      const isFindOneOptions = 'where' in options || 'relations' in options || 'order' in options || 'select' in options;
+      if (isFindOneOptions) {
+        logger.info('Ready to findOne (FindOneOptions) ClientSegment:', options);
+        return this.repository.findOne(options as any);
+      }
+      const tmp: FindOptionsWhere<ClientSegment> = options as FindOptionsWhere<ClientSegment>;
+      logger.info('Ready to findOneBy ClientSegment on repository:', tmp);
       return this.repository.findOneBy(tmp);
     }
 
