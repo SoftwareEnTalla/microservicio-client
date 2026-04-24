@@ -31,7 +31,7 @@
 import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne, OneToMany, ManyToMany, JoinTable, Index, Check, Unique } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { CreateClientTypeDto, UpdateClientTypeDto, DeleteClientTypeDto } from '../dtos/all-dto';
-import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
 import GraphQLJSON from 'graphql-type-json';
