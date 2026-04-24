@@ -52,6 +52,10 @@ import { ModuleRef } from "@nestjs/core";
 import { ClientQueryService } from "./clientquery.service";
 import { BaseEvent } from "../events/base.event";
 import { ClientHighCreditLimitDetectedEvent } from '../events/clienthighcreditlimitdetected.event';
+import { ClientUpstreamMirrorSyncedEvent } from '../events/clientupstreammirrorsynced.event';
+import { ClientUpstreamMirrorDivergedEvent } from '../events/clientupstreammirrordiverged.event';
+import { ClientUpstreamMirrorRevertedEvent } from '../events/clientupstreammirrorreverted.event';
+import { ClientUpstreamReferenceBrokenEvent } from '../events/clientupstreamreferencebroken.event';
 
 @Injectable()
 export class ClientCommandService implements OnModuleInit {

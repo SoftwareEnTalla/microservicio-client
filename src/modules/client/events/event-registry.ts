@@ -34,6 +34,10 @@ import { ClientCreatedEvent } from './clientcreated.event';
 import { ClientUpdatedEvent } from './clientupdated.event';
 import { ClientDeletedEvent } from './clientdeleted.event';
 import { ClientHighCreditLimitDetectedEvent } from './clienthighcreditlimitdetected.event';
+import { ClientUpstreamMirrorSyncedEvent } from './clientupstreammirrorsynced.event';
+import { ClientUpstreamMirrorDivergedEvent } from './clientupstreammirrordiverged.event';
+import { ClientUpstreamMirrorRevertedEvent } from './clientupstreammirrorreverted.event';
+import { ClientUpstreamReferenceBrokenEvent } from './clientupstreamreferencebroken.event';
 
 export type RegisteredEventClass<T extends BaseEvent = BaseEvent> = new (
   aggregateId: string,
@@ -87,6 +91,26 @@ const EVENT_DEFINITION_OVERRIDES: Partial<Record<string, Partial<Omit<Registered
     maxRetries: 5,
     replayable: true,
   },
+  'client-upstream-mirror-synced': {
+    version: '1.0.0',
+    maxRetries: 5,
+    replayable: true,
+  },
+  'client-upstream-mirror-diverged': {
+    version: '1.0.0',
+    maxRetries: 5,
+    replayable: true,
+  },
+  'client-upstream-mirror-reverted': {
+    version: '1.0.0',
+    maxRetries: 5,
+    replayable: true,
+  },
+  'client-upstream-reference-broken': {
+    version: '1.0.0',
+    maxRetries: 5,
+    replayable: true,
+  },
 };
 
 export const EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
@@ -94,6 +118,10 @@ export const EVENT_DEFINITIONS: Record<string, RegisteredEventDefinition> = {
   'client-updated': createEventDefinition('client-updated', ClientUpdatedEvent, EVENT_DEFINITION_OVERRIDES['client-updated']),
   'client-deleted': createEventDefinition('client-deleted', ClientDeletedEvent, EVENT_DEFINITION_OVERRIDES['client-deleted']),
   'client-high-credit-limit-detected': createEventDefinition('client-high-credit-limit-detected', ClientHighCreditLimitDetectedEvent, EVENT_DEFINITION_OVERRIDES['client-high-credit-limit-detected']),
+  'client-upstream-mirror-synced': createEventDefinition('client-upstream-mirror-synced', ClientUpstreamMirrorSyncedEvent, EVENT_DEFINITION_OVERRIDES['client-upstream-mirror-synced']),
+  'client-upstream-mirror-diverged': createEventDefinition('client-upstream-mirror-diverged', ClientUpstreamMirrorDivergedEvent, EVENT_DEFINITION_OVERRIDES['client-upstream-mirror-diverged']),
+  'client-upstream-mirror-reverted': createEventDefinition('client-upstream-mirror-reverted', ClientUpstreamMirrorRevertedEvent, EVENT_DEFINITION_OVERRIDES['client-upstream-mirror-reverted']),
+  'client-upstream-reference-broken': createEventDefinition('client-upstream-reference-broken', ClientUpstreamReferenceBrokenEvent, EVENT_DEFINITION_OVERRIDES['client-upstream-reference-broken']),
 };
 
 export const EVENT_REGISTRY: Record<string, RegisteredEventClass> = Object.fromEntries(

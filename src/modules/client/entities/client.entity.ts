@@ -31,7 +31,7 @@
 import { Column, Entity, OneToOne, JoinColumn, ChildEntity, ManyToOne, OneToMany, ManyToMany, JoinTable, Index, Check, Unique } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { CreateClientDto, UpdateClientDto, DeleteClientDto } from '../dtos/all-dto';
-import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Field, Float, Int, ObjectType } from "@nestjs/graphql";
 import GraphQLJSON from 'graphql-type-json';
@@ -82,12 +82,12 @@ export class Client extends BaseEntity {
   @ApiProperty({
     type: () => String,
     nullable: true,
-    description: 'Correo principal del cliente',
+    description: 'Correo comercial principal del cliente (autoritativo del client)',
   })
   @IsString()
   @IsOptional()
-  @Field(() => String, { description: 'Correo principal del cliente', nullable: true })
-  @Column({ type: 'varchar', nullable: true, length: 120, unique: true, comment: 'Correo principal del cliente' })
+  @Field(() => String, { description: 'Correo comercial principal del cliente (autoritativo del client)', nullable: true })
+  @Column({ type: 'varchar', nullable: true, length: 120, unique: true, comment: 'Correo comercial principal del cliente (autoritativo del client)' })
   email?: string = '';
 
   @ApiProperty({
@@ -100,6 +100,138 @@ export class Client extends BaseEntity {
   @Field(() => Float, { description: 'Límite de crédito', nullable: true })
   @Column({ type: 'decimal', nullable: true, precision: 12, scale: 2, default: 0, comment: 'Límite de crédito' })
   creditLimit?: number = 0;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'FK soft a hrms:person canónica del cliente (nullable si aún no existe o hrms no disponible)',
+  })
+  @IsUUID()
+  @IsOptional()
+  @Field(() => String, { description: 'FK soft a hrms:person canónica del cliente (nullable si aún no existe o hrms no disponible)', nullable: true })
+  @Column({ type: 'uuid', nullable: true, comment: 'FK soft a hrms:person canónica del cliente (nullable si aún no existe o hrms no disponible)' })
+  personId?: string;
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Nombre — mirror de hrms:person',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Nombre — mirror de hrms:person', nullable: true })
+  @Column({ type: 'varchar', nullable: true, length: 120, comment: 'Nombre — mirror de hrms:person' })
+  firstName?: string = '';
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Apellido — mirror de hrms:person',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Apellido — mirror de hrms:person', nullable: true })
+  @Column({ type: 'varchar', nullable: true, length: 120, comment: 'Apellido — mirror de hrms:person' })
+  lastName?: string = '';
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Tipo de documento — mirror de hrms:person',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Tipo de documento — mirror de hrms:person', nullable: true })
+  @Column({ type: 'varchar', nullable: true, length: 255, comment: 'Tipo de documento — mirror de hrms:person' })
+  documentType?: string = '';
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Número de documento — mirror de hrms:person',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Número de documento — mirror de hrms:person', nullable: true })
+  @Column({ type: 'varchar', nullable: true, length: 60, comment: 'Número de documento — mirror de hrms:person' })
+  documentNumber?: string = '';
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Teléfono — mirror de hrms:person',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Teléfono — mirror de hrms:person', nullable: true })
+  @Column({ type: 'varchar', nullable: true, length: 40, comment: 'Teléfono — mirror de hrms:person' })
+  phone?: string = '';
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Email de la persona — mirror (distinto del email comercial autoritativo del client)',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Email de la persona — mirror (distinto del email comercial autoritativo del client)', nullable: true })
+  @Column({ type: 'varchar', nullable: true, length: 120, comment: 'Email de la persona — mirror (distinto del email comercial autoritativo del client)' })
+  personEmail?: string = '';
+
+  @ApiProperty({
+    type: () => String,
+    nullable: false,
+    description: 'Estado de sincronización con el upstream hrms:person',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Field(() => String, { description: 'Estado de sincronización con el upstream hrms:person', nullable: false })
+  @Column({ type: 'varchar', nullable: false, length: 255, default: 'LOCAL_ONLY', comment: 'Estado de sincronización con el upstream hrms:person' })
+  upstreamSyncStatus!: string;
+
+  @ApiProperty({
+    type: () => Date,
+    nullable: true,
+    description: 'Última sincronización exitosa con upstream',
+  })
+  @IsDate()
+  @IsOptional()
+  @Field(() => Date, { description: 'Última sincronización exitosa con upstream', nullable: true })
+  @Column({ type: 'timestamp', nullable: true, comment: 'Última sincronización exitosa con upstream' })
+  upstreamSyncedAt?: Date = new Date();
+
+  @ApiProperty({
+    type: () => String,
+    nullable: true,
+    description: 'Hash SHA-256 del snapshot mirror recibido del upstream',
+  })
+  @IsString()
+  @IsOptional()
+  @Field(() => String, { description: 'Hash SHA-256 del snapshot mirror recibido del upstream', nullable: true })
+  @Column({ type: 'varchar', nullable: true, length: 64, comment: 'Hash SHA-256 del snapshot mirror recibido del upstream' })
+  upstreamHash?: string = '';
+
+  @ApiProperty({
+    type: () => Date,
+    nullable: true,
+    description: 'Último intento fallido de sincronización',
+  })
+  @IsDate()
+  @IsOptional()
+  @Field(() => Date, { description: 'Último intento fallido de sincronización', nullable: true })
+  @Column({ type: 'timestamp', nullable: true, comment: 'Último intento fallido de sincronización' })
+  upstreamLastErrorAt?: Date = new Date();
+
+  @ApiProperty({
+    type: () => Date,
+    nullable: true,
+    description: 'Último intento (ok o ko) de sincronización',
+  })
+  @IsDate()
+  @IsOptional()
+  @Field(() => Date, { description: 'Último intento (ok o ko) de sincronización', nullable: true })
+  @Column({ type: 'timestamp', nullable: true, comment: 'Último intento (ok o ko) de sincronización' })
+  upstreamLastAttemptAt?: Date = new Date();
 
   @ApiProperty({
     type: () => String,
