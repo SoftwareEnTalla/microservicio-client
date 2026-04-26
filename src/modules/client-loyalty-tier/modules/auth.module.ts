@@ -30,13 +30,11 @@
 
 
 import { Module } from "@nestjs/common";
-import { ClientLoyaltyTierCommandController } from "../controllers/clientloyaltytiercommand.controller";
 import { ClientLoyaltyTierLoggingInterceptor } from "../interceptors/clientloyaltytier.logging.interceptor";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { ClientLoyaltyTierAuthGuard } from "../guards/clientloyaltytierauthguard.guard";
 
 @Module({
-  controllers: [ClientLoyaltyTierCommandController],
   providers: [
     ClientLoyaltyTierAuthGuard,
     ClientLoyaltyTierLoggingInterceptor,

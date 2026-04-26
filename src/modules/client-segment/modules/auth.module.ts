@@ -30,13 +30,11 @@
 
 
 import { Module } from "@nestjs/common";
-import { ClientSegmentCommandController } from "../controllers/clientsegmentcommand.controller";
 import { ClientSegmentLoggingInterceptor } from "../interceptors/clientsegment.logging.interceptor";
 import { CommandBus, EventBus, UnhandledExceptionBus } from "@nestjs/cqrs";
 import { ClientSegmentAuthGuard } from "../guards/clientsegmentauthguard.guard";
 
 @Module({
-  controllers: [ClientSegmentCommandController],
   providers: [
     ClientSegmentAuthGuard,
     ClientSegmentLoggingInterceptor,
