@@ -51,7 +51,15 @@ export class ClientLoyaltyTierAuthGuard implements CanActivate {
   }
 
   private validateToken(token: string): boolean {
-    // Implementar lógica real de validación
-    return token === 'valid-token';
+    try {
+      const secret = process.env.JWT_PUBLIC_KEY || process.env.JWT_SECRET;
+      if (!secret) return false;
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const jwt = require('jsonwebtoken');
+      jwt.verify(token, secret, { algorithms: ['HS256','HS512','RS256'] });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

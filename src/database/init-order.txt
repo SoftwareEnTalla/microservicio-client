@@ -1,0 +1,3 @@
+postgres-1-catalog-sync-log.sql
+postgres-2-client-types.sql
+postgres-3-client-segments.sql

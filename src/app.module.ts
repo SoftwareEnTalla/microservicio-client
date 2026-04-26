@@ -68,19 +68,32 @@ import { HeaderResolver, AcceptLanguageResolver } from "nestjs-i18n";
 import { TranslocoWrapperService } from "./core/services/transloco-wrapper.service";
 import { TranslocoModule } from "@ngneat/transloco";
 import LoggerService, { logger } from "@core/logs/logger";
-import { AuthClientLoyaltyTierModule } from "./modules/client-loyalty-tier/modules/auth.module";
-import { KafkaModule } from "./modules/client-loyalty-tier/modules/kafka.module";
-import { AuthClientSegmentModule } from "./modules/client-segment/modules/auth.module";
-import { KafkaModule } from "./modules/client-segment/modules/kafka.module";
-import { AuthClientModule } from "./modules/client/modules/auth.module";
-import { KafkaModule } from "./modules/client/modules/kafka.module";
-import { AuthClientTypeModule } from "./modules/client-type/modules/auth.module";
-import { KafkaModule } from "./modules/client-type/modules/kafka.module";
+
+
+
+
+
+
+
+
 
 */
 
+import { AuthClientLoyaltyTierModule } from "./modules/client-loyalty-tier/modules/auth.module";
+import { KafkaModule as KafkaClientLoyaltyTierModule } from "./modules/client-loyalty-tier/modules/kafka.module";
+import { AuthClientSegmentModule } from "./modules/client-segment/modules/auth.module";
+import { KafkaModule as KafkaClientSegmentModule } from "./modules/client-segment/modules/kafka.module";
+import { AuthClientModule } from "./modules/client/modules/auth.module";
+import { KafkaModule as KafkaClientModule } from "./modules/client/modules/kafka.module";
+import { AuthClientTypeModule } from "./modules/client-type/modules/auth.module";
+import { KafkaModule as KafkaClientTypeModule } from "./modules/client-type/modules/kafka.module";
+import { HorizontalModule } from "@common/horizontal";
+import { CatalogClientModule } from "./modules/catalog-client/catalog-client.module";
+
+import { NomencladorListenersModule } from './modules/nomenclador-listeners/nomenclador-listeners.module';
 @Module({
   imports: [
+    CatalogClientModule,
     // Se importa/registra el módulo de caché
     CacheModule.register(),
 
@@ -127,6 +140,7 @@ import { KafkaModule } from "./modules/client-type/modules/kafka.module";
      * Módulos Client de la aplicación
      */
     CqrsModule,
+    HorizontalModule,
     ClientModule,
         ClientLoyaltyTierModule,
     ClientSegmentModule,
@@ -135,13 +149,13 @@ import { KafkaModule } from "./modules/client-type/modules/kafka.module";
      * Módulo Logger de la aplicación
      */
         AuthClientLoyaltyTierModule,
-    KafkaModule,
+    KafkaClientLoyaltyTierModule,
     AuthClientSegmentModule,
-    KafkaModule,
+    KafkaClientSegmentModule,
     AuthClientModule,
-    KafkaModule,
+    KafkaClientModule,
     AuthClientTypeModule,
-    KafkaModule,
+    KafkaClientTypeModule,
     LoggingModule,
 
     // GraphQL solo si GRAPHQL_ENABLED=true
@@ -157,6 +171,8 @@ import { KafkaModule } from "./modules/client-type/modules/kafka.module";
           }),
         ]
       : []),
+  
+    NomencladorListenersModule,
   ],
 
   /**
