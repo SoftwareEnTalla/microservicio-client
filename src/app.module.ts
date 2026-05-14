@@ -57,6 +57,7 @@ import { ClientSegmentQueryService } from "./modules/client-segment/services/cli
 import { ClientTypeModule } from "./modules/client-type/modules/clienttype.module";
 import { ClientTypeCommandService } from "./modules/client-type/services/clienttypecommand.service";
 import { ClientTypeQueryService } from "./modules/client-type/services/clienttypequery.service";
+import { ClientTacticalSummaryModule } from "./modules/client-tactical-summary/client-tactical-summary.module";
 
 /*
 //TODO unused for while dependencies
@@ -145,6 +146,7 @@ import { NomencladorListenersModule } from './modules/nomenclador-listeners/nome
         ClientLoyaltyTierModule,
     ClientSegmentModule,
     ClientTypeModule,    
+        ClientTacticalSummaryModule,
     /**
      * Módulo Logger de la aplicación
      */
